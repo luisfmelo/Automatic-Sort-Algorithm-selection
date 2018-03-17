@@ -1,5 +1,6 @@
 
 .idea/
+.idea/*
 test-arrays.csv
 train-arrays.csv
 train-target.csv
