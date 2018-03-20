@@ -1,14 +1,14 @@
 import os
 from datetime import datetime
 
-from numpy.random.mtrand import permutation
-from sklearn.neighbors import KNeighborsRegressor
-
 import numpy as np
 import pandas as pd
+from numpy.random.mtrand import permutation
+from sklearn.neighbors import KNeighborsRegressor, KNeighborsClassifier
 from sqlalchemy import create_engine
 
-TRAIN_DATA = '../feature-extraction-min/train-arrays-min.csv'  # 'train-arrays.csv'
+# TRAIN_DATA = '../feature-extraction-min/train-arrays-min.csv'  # 'train-arrays.csv'
+TRAIN_DATA = '../csv_files/train-arrays.csv'  # 'train-arrays.csv'
 TARGET_OUTPUT = '../csv_files/train-target.csv'
 EXTRACT_FEATURES = False
 
@@ -58,7 +58,7 @@ def feature_extraction(db, chunksize):
                     'q3': np.percentile(array, 75),
                     'std_deviation': np.std(array, axis=0),
                     'variance': np.var(array, axis=0),
-                    'target': int(target[0])
+                    'target': int(target[row['id']])
                 })
 
             pd.DataFrame(features).to_sql(table_name, db, if_exists='append', index_label=id)
@@ -68,25 +68,26 @@ def feature_extraction(db, chunksize):
         print('Feature Extraction ended in {} seconds: completed {} iterations of {} chunk'.format(delta_time, iterations, chunksize))
         df = pd.DataFrame(feature_arr)
     else:
-        df = pd.read_sql_table(table_name=table_name, con=db, index_col='id')
+        df = pd.read_sql_table(table_name=table_name, con=db)
 
     return df
 
 
-def knn_model(train, test, feature_cols, predict_col):
+def knn_model(k, train, test, feature_cols, predict_col):
     # Create the knn model.
     # Look at the five closest neighbors.
-    knn = KNeighborsRegressor(n_neighbors=5)
+    knn = KNeighborsRegressor(n_neighbors=k)
     # Fit the model on the training data.
     knn.fit(train[feature_cols], train[predict_col])
     # Make point predictions on the test set using the fit model.
     predictions = knn.predict(test[feature_cols])
+    # probs = knn.predict_proba(test[feature_cols])
 
     return predictions
 
 
 def apply_model(model, df):
-    train_cols = ['length']
+    train_cols = ['length', 'max', 'min', 'dist_min_max', 'average', 'mean', 'q1', 'q2', 'q3', 'std_deviation', 'variance', 'target']
     target_col = ['target']
 
     # Randomly shuffle the index of nba.
@@ -99,7 +100,8 @@ def apply_model(model, df):
     train = df.loc[random_indices[test_cutoff:]]
 
     if model == 'knn':
-        predictions = knn_model(train, test, train_cols, target_col)
+        k = 2
+        predictions = knn_model(k, train, test, train_cols, target_col)
     else:
         raise Exception('No available model was selected.')
 
@@ -110,6 +112,7 @@ def apply_model(model, df):
     error = (((predictions - actual) ** 2).sum()) / len(predictions)
 
     return error['target']
+
 
 def main():
     chunksize = 10
@@ -127,5 +130,6 @@ def main():
 
     delta_time = (datetime.now() - start_time)
     print('Ended in {} seconds. Error: {}'.format(delta_time, error))
+
 
 main()
