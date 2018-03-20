@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sqlalchemy import create_engine
 
-TRAIN_DATA = 'train-arrays.csv'
+TRAIN_DATA = 'feature-extraction-min/train-arrays-min.csv'  # 'train-arrays.csv'
 FEATURES = []
 
 
@@ -47,14 +47,13 @@ def feature_extraction(df_train):
             'q3': np.percentile(array, 75),
             'std_deviation': np.std(array, axis=0),
             'variance': np.var(array, axis=0),
-            'prod_moment_correlation': np.corrcoef(array)
 
         })
 
     return pd.DataFrame(FEATURES)
 
 
-DATABASE = create_engine('sqlite:///csv_database.db')
+DATABASE = create_engine('sqlite:///database2.db')
 read_big_data_train_data()
 
 print('The end')

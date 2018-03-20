@@ -1,0 +1,14 @@
+certifi==2018.1.18
+chardet==3.0.4
+dt==0.2
+idna==2.6
+numpy==1.14.2
+pandas==0.22.0
+python-dateutil==2.7.0
+pytz==2018.3
+requests==2.18.4
+scikit-learn==0.19.1
+scipy==1.0.0
+six==1.11.0
+SQLAlchemy==1.2.5
+urllib3==1.22

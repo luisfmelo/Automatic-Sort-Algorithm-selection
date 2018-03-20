@@ -4,5 +4,5 @@
 test-arrays.csv
 train-arrays.csv
 train-target.csv
-csv_database.db
+database.db
 output.csv
