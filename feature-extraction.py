@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sqlalchemy import create_engine
 
-TRAIN_DATA = 'feature-extraction-min/train-arrays-min.csv'  # 'train-arrays.csv'
+TRAIN_DATA = '_feature-extraction-min/train-arrays-min.csv'  # 'train-arrays.csv'
 FEATURES = []
 
 
