@@ -4,4 +4,4 @@
 test-arrays.csv
 train-arrays.csv
 train-target.csv
-output.csv
+submissions/1st/output.csv

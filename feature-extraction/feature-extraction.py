@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from _helpers.Database import Database
-from config import TARGET_OUTPUT, TRAIN_DATA, DB_FEATURE_TABLE, DB_PATH, DIR
+from config import TRAIN_TARGET_OUTPUT, TRAIN_DATA, DB_FEATURE_TABLE, DB_PATH, DIR
 
 EXTRACT_FEATURES = False
 
@@ -24,7 +24,7 @@ def feature_extraction(db, chunksize):
     iterations = 0
     feature_arr = []
 
-    df_target = pd.read_csv(DIR + TARGET_OUTPUT, encoding='latin1', error_bad_lines=False, index_col='Id')
+    df_target = pd.read_csv(DIR + TRAIN_TARGET_OUTPUT, encoding='latin1', error_bad_lines=False, index_col='Id')
 
     for df_train in pd.read_csv(DIR + TRAIN_DATA, iterator=True, encoding='latin1', error_bad_lines=False, names=["id", "length", "array"],
                                 chunksize=chunksize):
@@ -72,14 +72,14 @@ def main():
     except OSError:
         pass
 
-    db = Database()
+    db = Database(DB_PATH)
 
     if EXTRACT_FEATURES:
         iterations = feature_extraction(db, chunksize)
         delta_time = (datetime.now() - start_time)
         print('Feature Extraction ended in {} seconds: completed {} iterations of {} chunk'.format(delta_time, iterations, chunksize))
     else:
-        db.save_csv(DB_FEATURE_TABLE, '../csv_files/features.csv')
+        db.db_table_to_csv(DB_FEATURE_TABLE, '../csv_files/features.csv')
         print('Extract Feature is disabled. CSV file was generated')
 
 
