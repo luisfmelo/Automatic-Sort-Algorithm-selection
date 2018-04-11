@@ -3,11 +3,9 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
-from numpy.random.mtrand import permutation
-from sklearn.neighbors import KNeighborsRegressor, KNeighborsClassifier
 
 from _helpers.Database import Database
-from config import TARGET_OUTPUT, TRAIN_DATA, DB_FEATURE_TABLE, DB_PATH
+from config import TARGET_OUTPUT, TRAIN_DATA, DB_FEATURE_TABLE, DB_PATH, DIR
 
 EXTRACT_FEATURES = False
 
@@ -26,15 +24,16 @@ def feature_extraction(db, chunksize):
     iterations = 0
     feature_arr = []
 
-    df_target = pd.read_csv(TARGET_OUTPUT, encoding='latin1', error_bad_lines=False, index_col='Id')
+    df_target = pd.read_csv(DIR + TARGET_OUTPUT, encoding='latin1', error_bad_lines=False, index_col='Id')
 
-    for df_train in pd.read_csv(TRAIN_DATA, iterator=True, encoding='latin1', error_bad_lines=False, names=["id", "length", "array"],
+    for df_train in pd.read_csv(DIR + TRAIN_DATA, iterator=True, encoding='latin1', error_bad_lines=False, names=["id", "length", "array"],
                                 chunksize=chunksize):
         df_train['array'] = df_train['array'].apply(reformat_array())
 
         features = []
         for index, row in df_train.iterrows():
             array = np.array(row['array'])
+            dist_between_elems = [array[i + 1] - array[i] for i in range(len(array) - 1)]
             # TODO - validations
             target = df_target['Predicted']
 
@@ -53,7 +52,9 @@ def feature_extraction(db, chunksize):
                 'q3': np.percentile(array, 75),
                 'std_deviation': np.std(array, axis=0),
                 'variance': np.var(array, axis=0),
-                'target': int(target[row['id']])
+                'target': int(target[row['id']]),
+                'avg_diff': sum(dist_between_elems) / len(dist_between_elems)
+
             })
 
         db.append_df_to_table(features, DB_FEATURE_TABLE, id)
@@ -66,18 +67,20 @@ def feature_extraction(db, chunksize):
 def main():
     chunksize = 10
     start_time = datetime.now()
-    if EXTRACT_FEATURES:
-        try:
-            os.remove(DB_PATH)
-        except OSError:
-            pass
+    try:
+        os.remove(DB_PATH)
+    except OSError:
+        pass
 
-        db = Database()
+    db = Database()
+
+    if EXTRACT_FEATURES:
         iterations = feature_extraction(db, chunksize)
         delta_time = (datetime.now() - start_time)
         print('Feature Extraction ended in {} seconds: completed {} iterations of {} chunk'.format(delta_time, iterations, chunksize))
     else:
-        print('Extract Feature is disabled.')
+        db.save_csv(DB_FEATURE_TABLE, '../csv_files/features.csv')
+        print('Extract Feature is disabled. CSV file was generated')
 
 
 main()

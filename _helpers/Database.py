@@ -16,3 +16,9 @@ class Database:
 
     def append_df_to_table(self, df, table_name, index=id):
         pd.DataFrame(df).to_sql(table_name, self.db, if_exists='append', index_label=id)
+
+    def save_csv(self, table_name, path):
+        self.get_df_from_table(table_name).to_csv(path)
+
+    def load_csv(self, path):
+        return pd.read_csv(path)

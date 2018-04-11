@@ -1,6 +1,5 @@
 certifi==2018.1.18
 chardet==3.0.4
-dt==0.2
 idna==2.6
 numpy==1.14.2
 pandas==0.22.0

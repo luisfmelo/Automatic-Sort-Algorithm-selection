@@ -1,21 +1,22 @@
+import os.path
+
 import pandas as pd
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.neural_network import MLPClassifier
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.ensemble import RandomForestClassifier
+from sklearn import svm
+from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn import svm
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import cross_val_predict
-from sklearn.metrics import accuracy_score, precision_score, f1_score
-import config as cfg
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
-import os.path
+from sklearn.metrics import accuracy_score, precision_score, f1_score
+from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import cross_val_score
+from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.tree import DecisionTreeClassifier
+
+import config as cfg
 
 
 class GenericClassifier():
