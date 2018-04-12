@@ -1,12 +1,17 @@
-import pandas as pd
+import pickle
+
 import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
 
 from _helpers.Database import Database
-from config import DB_PATH
+from config import DIR, TEST_DATA, DB_PATH
 
 
 class GenericModel:
-
     DB = Database(DB_PATH)
 
     @staticmethod
@@ -42,10 +47,7 @@ class GenericModel:
                 array = np.array(row['array'])
                 dist_between_elems = [array[i + 1] - array[i] for i in range(len(array) - 1)]
                 # TODO - validations
-                if path_target_data is not None:
-                    target = df_target['Predicted']
-                else:
-                    target = None
+                target = None if path_target_data is None else df_target['Predicted']
 
                 features.append({
                     'id': row['id'],
@@ -71,3 +73,92 @@ class GenericModel:
             iterations = iterations + 1
 
         return iterations
+
+    @staticmethod
+    def apply_model(algorithm, parameters, feature_cols, model_file, test_size=0.15):
+        try:
+            algorithm = GenericModel.get_algorithm(algorithm, parameters)
+            classifier = algorithm['function']
+            classifier_name = algorithm['name']
+            classifier_parameters = algorithm['parameters']
+        except ModuleNotFoundError as e:
+            return str(e)
+
+        dataset = GenericModel.DB.load_csv('../csv_files/features.csv')
+
+        feature_arr = [dataset.columns.get_loc(feature_name) for feature_name in feature_cols]
+        X = dataset.iloc[:, feature_arr].values
+
+        y = dataset.iloc[:, dataset.columns.get_loc("target")].values
+
+        # Get Train and Test Data
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=None)
+
+        # Fit to model
+        classifier.fit(X_train, y_train)
+
+        # Predict Output
+        y_pred = classifier.predict(X_test)
+
+        # Confusion Matrix
+        cm = confusion_matrix(y_test, y_pred)
+
+        # Get Accuracy
+        accuracy = accuracy_score(y_test, y_pred) * 100
+
+        print('--------------------------------------------')
+        print(classifier_name)
+        print('Parameters: ' + classifier_parameters)
+        print("Accuracy with Decision Tree is: {} %".format(accuracy))
+        print('Confusion Matrix: {}'.format(cm))
+
+        # save the model to disk
+        filename = '../bin_models/' + model_file
+        pickle.dump(classifier, open(filename, 'wb'))
+
+        return filename
+
+    @staticmethod
+    def predict(bin_model, feature_cols, output_file_name):
+        # Extract Features
+        chunksize = 10
+        GenericModel.extract_features(None, DIR + TEST_DATA, chunksize, 'test_feature_data')
+        df_features = GenericModel.DB.get_df_from_table('test_feature_data')
+
+        # load saved model from disk
+        feature_arr = [df_features.columns.get_loc(feature_name) for feature_name in feature_cols]
+        X_test_data = df_features.iloc[:, feature_arr].values
+
+        loaded_model = pickle.load(open(bin_model, 'rb'))
+        result = loaded_model.predict(X_test_data)
+
+        df_output = pd.DataFrame()
+        df_output['Id'] = df_features["id"]
+        df_output['Predicted'] = result
+
+        # save to CSV
+        df_output.to_csv(output_file_name, index=False, columns=['Id', 'Predicted'], header=True)
+
+    @staticmethod
+    def get_algorithm(algorithm_code, parameters):
+        algorithm = {}
+
+        if algorithm_code == 'decision_tree':
+            algorithm = {
+                'name': 'Decision Tree Classifier',
+                'function': DecisionTreeClassifier(**parameters),
+            }
+
+        elif algorithm_code == 'knn':
+            algorithm = {
+                'name': 'K Neighbors Classifier',
+                'function': KNeighborsClassifier(**parameters),
+            }
+
+        else:
+            raise ModuleNotFoundError('Algorithm not available.')
+
+        # String with parameters used
+        algorithm['parameters'] = '; '.join([parameter + ': ' + str(value) for parameter, value in parameters.items()])
+
+        return algorithm
