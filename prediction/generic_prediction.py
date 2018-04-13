@@ -1,8 +1,8 @@
 from _helpers.GenericModel import GenericModel
 
-# DECISION TREE
-
 feature_cols = ['length', 'avg_diff']
+
+# DECISION TREE
 algorithm = 'decision_tree'
 bin_model_file_name = 'decision_tree_with_length.sav'
 output_file_name = 'decision_tree.csv'
@@ -18,7 +18,6 @@ GenericModel.predict(bin_model, feature_cols, output_file_name)
 
 
 # KNN
-feature_cols = ['length', 'avg_diff']
 algorithm = 'knn'
 bin_model_file_name = 'knn.sav'
 output_file_name = 'knn_output.csv'

@@ -85,7 +85,7 @@ class GenericModel:
         except ModuleNotFoundError as e:
             return str(e)
 
-        dataset = GenericModel.DB.load_csv('../csv_files/features.csv')
+        dataset = GenericModel.DB.load_csv('../csv_files/train_features.csv')
 
         feature_arr = [dataset.columns.get_loc(feature_name) for feature_name in feature_cols]
         X = dataset.iloc[:, feature_arr].values
