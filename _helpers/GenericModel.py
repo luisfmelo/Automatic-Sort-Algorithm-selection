@@ -2,7 +2,7 @@ import pickle
 
 import numpy as np
 import pandas as pd
-import pymrmr as pymrmr
+# import pymrmr as pymrmr
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.neighbors import KNeighborsClassifier
@@ -93,7 +93,7 @@ class GenericModel:
         y = dataset.iloc[:, dataset.columns.get_loc("target")].values
 
         # Get Train and Test Data
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=None)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)#, random_state=None)
 
         # df_pymrmr = dataset[-1:] + dataset[:-1]
         # a = pymrmr.mRMR(df_pymrmr, 'MIQ', 5)
