@@ -1,6 +1,4 @@
-from string import ascii_letters
 import numpy as np
-import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from pandas.plotting import scatter_matrix
@@ -9,6 +7,7 @@ from pandas.plotting import scatter_matrix
 class VisualizerHelper:
     @staticmethod
     def make_plot(plot, data):
+        data = data.drop(['<built-in function id>', 'Unnamed: 0', 'id'], axis=1)
         if plot == 'all':
             VisualizerHelper.__correlation_matrix_plot(data)
             VisualizerHelper.__triangle_correlation_matrix_plot(data)
@@ -26,11 +25,10 @@ class VisualizerHelper:
         ax = fig.add_subplot(111)
         cax = ax.matshow(correlations, vmin=-1, vmax=1)
         fig.colorbar(cax)
-        # ticks = np.arange(0, 9, 1)
-        # ax.set_xticks(ticks)
-        # ax.set_yticks(ticks)
-        ax.set_xticklabels(data.columns.values)
+        ax.set_xticklabels(data.columns.values, rotation=90)
         ax.set_yticklabels(data.columns.values)
+        ax.set_xticks(np.arange(len(data.columns.values)))
+        ax.set_yticks(np.arange(len(data.columns.values)))
         plt.show()
 
     @staticmethod

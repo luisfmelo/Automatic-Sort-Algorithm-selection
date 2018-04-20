@@ -7,6 +7,7 @@ import pandas
 import pandas as pd
 from pandas.plotting import scatter_matrix
 from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
@@ -46,39 +47,15 @@ class GenericModel:
 
         if path_target_data is not None:
             df_target = pd.read_csv(path_target_data, encoding='latin1', error_bad_lines=False, index_col='Id')
+            target = df_target['Predicted']
+        else:
+            target = None
 
         for df_train in pd.read_csv(path_train_data, iterator=True, encoding='latin1', error_bad_lines=False, names=["id", "length", "array"],
                                     chunksize=chunksize):
             df_train['array'] = df_train['array'].apply(GenericModel.reformat_array())
-
-            features = []
-            for index, row in df_train.iterrows():
-                array = np.array(row['array'])
-                dist_between_elems = [array[i + 1] - array[i] for i in range(len(array) - 1)]
-                # TODO - validations
-                target = None if path_target_data is None else df_target['Predicted']
-
-                features.append({
-                    'id': row['id'],
-                    'length': len(array),
-                    'max': max(array),
-                    'min': min(array),
-                    'dist_min_max': max(array) - min(array),
-                    # Compute the weighted average along the specified axis.
-                    'average': np.average(array, axis=0),
-                    # Compute the arithmetic mean along the specified axis
-                    'mean': np.mean(array, axis=0),  # reduce(lambda x, y: x + y, array) / len(array),
-                    'q1': np.percentile(array, 25),
-                    'q2': np.percentile(array, 50),  # median
-                    'q3': np.percentile(array, 75),
-                    'std_deviation': np.std(array, axis=0),
-                    'variance': np.var(array, axis=0),
-                    'avg_diff': sum(dist_between_elems) / len(dist_between_elems),
-                    'sorted_percentage': len([index for index, value in enumerate(array) if index != 0 and array[index] > array[index - 1]])/len(array) * 100,
-                    'target': int(target[row['id']]) if target is not None else '',
-                })
-
-            GenericModel.DB.append_df_to_table(features, table_name, id)
+            features = [GenericModel.np_extract_array_features(row, target) for _, row in df_train.iterrows()]
+            GenericModel.DB.append_df_to_table(features, table_name, df_train['id'])
             feature_arr = feature_arr + features
             iterations = iterations + 1
 
@@ -86,6 +63,32 @@ class GenericModel:
         GenericModel.DB.db_table_to_csv(table_name, '../csv_files/{}.csv'.format(table_name))
 
         return iterations
+
+    @staticmethod
+    def np_extract_array_features(row, target):
+        array = np.array(row['array'])
+        dist_between_elems = [array[i + 1] - array[i] for i in range(len(array) - 1)]
+
+        return {
+            'id': row['id'],
+            'length': len(array),
+            'max': max(array),
+            'min': min(array),
+            'dist_min_max': max(array) - min(array),
+            # Compute the weighted average along the specified axis.
+            'average': np.average(array, axis=0),
+            # Compute the arithmetic mean along the specified axis
+            'mean': np.mean(array, axis=0),  # reduce(lambda x, y: x + y, array) / len(array),
+            'q1': np.percentile(array, 25),
+            'q2': np.percentile(array, 50),  # median
+            'q3': np.percentile(array, 75),
+            'std_deviation': np.std(array, axis=0),
+            'variance': np.var(array, axis=0),
+            'avg_diff': sum(dist_between_elems) / len(dist_between_elems),
+            'sorted_percentage': len([index for index, value in enumerate(array) if index != 0 and array[index] > array[index - 1]]) / len(
+                array) * 100,
+            'target': int(target[row['id']]) if target is not None else '',
+        }
 
     @staticmethod
     def apply_model(algorithm, parameters, feature_cols, model_file, test_size=0.15):
@@ -188,6 +191,12 @@ class GenericModel:
             algorithm = {
                 'name': 'Support Vector Machine (SVM)',
                 'function': svm.SVC(**parameters),
+            }
+
+        elif algorithm_code == 'random_forest':
+            algorithm = {
+                'name': 'Random Forest',
+                'function': RandomForestClassifier(**parameters),
             }
 
         else:
