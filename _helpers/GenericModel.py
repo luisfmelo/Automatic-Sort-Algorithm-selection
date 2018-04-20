@@ -1,15 +1,23 @@
 import pickle
 
+import matplotlib.pyplot as plt
+import numpy
 import numpy as np
+import pandas
 import pandas as pd
-# import pymrmr as pymrmr
-from sklearn.model_selection import train_test_split
+from pandas.plotting import scatter_matrix
+from sklearn import svm
 from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
+import seaborn as sns
 
 from _helpers.Database import Database
+from _helpers.VisualizerHelper import VisualizerHelper
 from config import DIR, TEST_DATA, DB_PATH
+
 
 
 class GenericModel:
@@ -66,12 +74,16 @@ class GenericModel:
                     'std_deviation': np.std(array, axis=0),
                     'variance': np.var(array, axis=0),
                     'avg_diff': sum(dist_between_elems) / len(dist_between_elems),
+                    'sorted_percentage': len([index for index, value in enumerate(array) if index != 0 and array[index] > array[index - 1]])/len(array) * 100,
                     'target': int(target[row['id']]) if target is not None else '',
                 })
 
             GenericModel.DB.append_df_to_table(features, table_name, id)
             feature_arr = feature_arr + features
             iterations = iterations + 1
+
+        # Generate CSV
+        GenericModel.DB.db_table_to_csv(table_name, '../csv_files/{}.csv'.format(table_name))
 
         return iterations
 
@@ -85,7 +97,7 @@ class GenericModel:
         except ModuleNotFoundError as e:
             return str(e)
 
-        dataset = GenericModel.DB.load_csv('../csv_files/train_features.csv')
+        dataset = GenericModel.DB.load_csv('../csv_files/train_features_data.csv')
 
         feature_arr = [dataset.columns.get_loc(feature_name) for feature_name in feature_cols]
         X = dataset.iloc[:, feature_arr].values
@@ -93,7 +105,7 @@ class GenericModel:
         y = dataset.iloc[:, dataset.columns.get_loc("target")].values
 
         # Get Train and Test Data
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)#, random_state=None)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)  # , random_state=None)
 
         # df_pymrmr = dataset[-1:] + dataset[:-1]
         # a = pymrmr.mRMR(df_pymrmr, 'MIQ', 5)
@@ -129,8 +141,8 @@ class GenericModel:
     def predict(bin_model, feature_cols, output_file_name):
         # Extract Features
         chunksize = 10
-        GenericModel.extract_features(None, DIR + TEST_DATA, chunksize, 'test_feature_data')
-        df_features = GenericModel.DB.get_df_from_table('test_feature_data')
+        GenericModel.extract_features(None, DIR + TEST_DATA, chunksize, 'test_features_data')
+        df_features = GenericModel.DB.get_df_from_table('test_features_data')
 
         # load saved model from disk
         feature_arr = [df_features.columns.get_loc(feature_name) for feature_name in feature_cols]
@@ -158,6 +170,24 @@ class GenericModel:
             algorithm = {
                 'name': 'K Neighbors Classifier',
                 'function': KNeighborsClassifier(**parameters),
+            }
+
+        elif algorithm_code == 'gaussian_naive_bayes':
+            algorithm = {
+                'name': 'Gaussian Naive Bayes Classifier',
+                'function': GaussianNB(**parameters),
+            }
+
+        elif algorithm_code == 'multinomial_naive_bayes':
+            algorithm = {
+                'name': 'Multinomial Naive Bayes Classifier',
+                'function': MultinomialNB(**parameters),
+            }
+
+        elif algorithm_code == 'svm':
+            algorithm = {
+                'name': 'Support Vector Machine (SVM)',
+                'function': svm.SVC(**parameters),
             }
 
         else:

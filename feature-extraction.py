@@ -20,7 +20,7 @@ def read_big_data_train_data():
     for df in pd.read_csv(TRAIN_DATA, iterator=True, encoding='latin1', error_bad_lines=False, names=["index", "length", "array"], chunksize=10):
         df.to_sql('train_data', DATABASE, if_exists='append')
         features = feature_extraction(df)
-        features.to_sql('train_features', DATABASE, if_exists='append')
+        features.to_sql('train_features_data', DATABASE, if_exists='append')
 
 
 def read_train_data():

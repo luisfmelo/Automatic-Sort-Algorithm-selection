@@ -12,8 +12,8 @@ db = Database(DB_PATH)
 
 # Extract Features
 chunksize = 10
-iterations = GenericModel.extract_features(None, DIR + TEST_DATA, chunksize, 'test_feature_data')
-df_features = db.get_df_from_table('test_feature_data')
+iterations = GenericModel.extract_features(None, DIR + TEST_DATA, chunksize, 'test_features_data')
+df_features = db.get_df_from_table('test_features_data')
 
 # load saved model from disk
 X_test_data = df_features.iloc[:, [df_features.columns.get_loc("length")]].values

@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from _helpers.Database import Database
-from config import TRAIN_TARGET_OUTPUT, TRAIN_DATA, DB_FEATURE_TABLE, DB_PATH, DIR
+from config import TRAIN_TARGET_OUTPUT, TRAIN_DATA, DB_TRAIN_FEATURE_TABLE, DB_PATH, DIR
 
 EXTRACT_FEATURES = False
 
@@ -57,7 +57,7 @@ def feature_extraction(db, chunksize):
 
             })
 
-        db.append_df_to_table(features, DB_FEATURE_TABLE, id)
+        db.append_df_to_table(features, DB_TRAIN_FEATURE_TABLE, id)
         feature_arr = feature_arr + features
         iterations = iterations + 1
 
@@ -79,7 +79,7 @@ def main():
         delta_time = (datetime.now() - start_time)
         print('Feature Extraction ended in {} seconds: completed {} iterations of {} chunk'.format(delta_time, iterations, chunksize))
     else:
-        db.db_table_to_csv(DB_FEATURE_TABLE, '../csv_files/features.csv')
+        db.db_table_to_csv(DB_TRAIN_FEATURE_TABLE, '../csv_files/features.csv')
         print('Extract Feature is disabled. CSV file was generated')
 
 

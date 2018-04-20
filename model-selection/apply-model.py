@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsRegressor
 
 from _helpers.Database import Database
-from config import DB_FEATURE_TABLE
+from config import DB_TRAIN_FEATURE_TABLE
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import accuracy_score
@@ -84,7 +84,7 @@ def main():
     start_time = datetime.now()
 
     db = Database()
-    df = db.get_df_from_table(DB_FEATURE_TABLE)
+    df = db.get_df_from_table(DB_TRAIN_FEATURE_TABLE)
     error = apply_model('decision_tree', df)
 
     delta_time = (datetime.now() - start_time)

@@ -3,7 +3,7 @@ from datetime import datetime
 
 from _helpers.Database import Database
 from _helpers.GenericModel import GenericModel
-from config import TRAIN_TARGET_OUTPUT, TRAIN_DATA, DB_FEATURE_TABLE, DB_PATH, DIR
+from config import TRAIN_TARGET_OUTPUT, TRAIN_DATA, DB_TRAIN_FEATURE_TABLE, DB_PATH, DIR
 
 # EXTRACT_FEATURES = False
 
@@ -17,7 +17,7 @@ except OSError:
 db = Database(DB_PATH)
 
 # if EXTRACT_FEATURES:
-iterations = GenericModel.extract_features(DIR + TRAIN_TARGET_OUTPUT, DIR + TRAIN_DATA, chunksize, DB_FEATURE_TABLE)
+iterations = GenericModel.extract_features(DIR + TRAIN_TARGET_OUTPUT, DIR + TRAIN_DATA, chunksize, DB_TRAIN_FEATURE_TABLE)
 if iterations == 0:
     print('Extract Feature is disabled. CSV file was generated')
 else:
