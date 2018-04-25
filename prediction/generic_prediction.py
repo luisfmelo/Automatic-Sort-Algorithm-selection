@@ -19,87 +19,32 @@ else:
 
 GenericModel.extract_features(None, DIR + TEST_DATA, CHUNKSIZE, DB_TEST_FEATURE_TABLE, FORCE=False)
 
-feature_cols = ['q1', 'length', 'sorted_percentage', 'min', 'max', 'dist_min_max']
-
-# any
-# algorithm = 'any'
-# bin_model_file_name = 'any.sav'
-# output_file_name = 'any.csv'
-# test_size = 0.1
-#
-# bin_model = GenericModel.apply_model(algorithm, {}, feature_cols, bin_model_file_name, test_size)
-# GenericModel.predict(bin_model, feature_cols, output_file_name)
-
-
+feature_cols = ['length', 'sorted_percentage', 'dist_min_max']
 
 # DECISION TREE
-algorithm = 'decision_tree'
-bin_model_file_name = 'decision_tree_with_length.sav'
-output_file_name = 'decision_tree.csv'
-test_size = 0.1
-
-parameters = {
-    'criterion': 'entropy',  # gini
-    'random_state': 0
-}
-
-bin_model = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
-GenericModel.predict(bin_model, feature_cols, output_file_name)
-
-# KNN
-algorithm = 'knn'
-bin_model_file_name = 'knn.sav'
-output_file_name = 'knn_output.csv'
-test_size = 0.15
-
-parameters = {
-    'n_neighbors': 3,
-    'algorithm': 'ball_tree'
-}
-
-bin_model = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
-GenericModel.predict(bin_model, feature_cols, output_file_name)
-
-# Gaussian Naive Bayes Classifier
-# algorithm = 'gaussian_naive_bayes'
-# bin_model_file_name = 'gaussian_naive_bayes.sav'
-# output_file_name = 'gaussian_naive_bayes_output.csv'
-# test_size = 0.15
+# algorithm = 'decision_tree'
+# bin_model_file_name = 'decision_tree_with_length.sav'
+# output_file_name = 'decision_tree.csv'
+# test_size = 0.3
 #
-# parameters = {}
+# parameters = {
+#     'criterion': 'entropy',  # gini
+#     'random_state': 0
+# }
 #
 # bin_model = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
 # GenericModel.predict(bin_model, feature_cols, output_file_name)
-
-# Multinomial Naive Bayes Classifier
-# algorithm = 'multinomial_naive_bayes'
-# bin_model_file_name = 'multinomial_naive_bayes.sav'
-# output_file_name = 'multinomial_naive_bayes_output.csv'
-# test_size = 0.15
 #
-# parameters = {}
-#
-# bin_model = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
-# GenericModel.predict(bin_model, feature_cols, output_file_name)
-
-# SVM
-# algorithm = 'svm'
-# bin_model_file_name = 'svm.sav'
-# output_file_name = 'svm_output.csv'
-# test_size = 0.15
-#
-# parameters = {}
-#
-# bin_model = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
-# GenericModel.predict(bin_model, feature_cols, output_file_name)
-
-# RANDOM FOREST
+# # RANDOM FOREST
 algorithm = 'random_forest'
 bin_model_file_name = 'random_forest.sav'
 output_file_name = 'random_forest_output.csv'
-test_size = 0.15
+test_size = 0.1
 
-parameters = {'n_estimators': 500}
+parameters = {'criterion': 'gini', 'max_depth': 6, 'max_features': 'log2', 'n_estimators': 500}
 
 bin_model = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
 GenericModel.predict(bin_model, feature_cols, output_file_name)
+
+
+# GenericModel.grid_search(algorithm, feature_cols, test_size)

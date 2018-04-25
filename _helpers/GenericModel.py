@@ -1,24 +1,17 @@
 import pickle
 
-import matplotlib.pyplot as plt
-import numpy
 import numpy as np
-import pandas
 import pandas as pd
-from pandas.plotting import scatter_matrix
 from sklearn import svm
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix, accuracy_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
-import seaborn as sns
 
 from _helpers.Database import Database
-from _helpers.VisualizerHelper import VisualizerHelper
 from config import DIR, TEST_DATA, DB_PATH
-
 
 
 class GenericModel:
@@ -197,6 +190,12 @@ class GenericModel:
             algorithm = {
                 'name': 'Random Forest',
                 'function': RandomForestClassifier(**parameters),
+                'grid_search': {
+                    'n_estimators': [200, 500],
+                    'max_features': ['auto', 'sqrt', 'log2'],
+                    'max_depth': [4, 5, 6, 7, 8],
+                    'criterion': ['gini', 'entropy']
+                }
             }
 
         else:
@@ -206,3 +205,26 @@ class GenericModel:
         algorithm['parameters'] = '; '.join([parameter + ': ' + str(value) for parameter, value in parameters.items()])
 
         return algorithm
+
+    @staticmethod
+    def grid_search(algorithm, feature_cols, test_size):
+        try:
+            algorithm = GenericModel.get_algorithm(algorithm, {})
+            classifier = algorithm['function']
+            classifier_name = algorithm['name']
+            classifier_parameters = algorithm['parameters']
+            classifier_grid_search = algorithm['grid_search']
+        except ModuleNotFoundError as e:
+            return str(e)
+
+        dataset = GenericModel.DB.load_csv('../csv_files/train_features_data.csv')
+
+        feature_arr = [dataset.columns.get_loc(feature_name) for feature_name in feature_cols]
+        X = dataset.iloc[:, feature_arr].values
+        y = dataset.iloc[:, dataset.columns.get_loc("target")].values
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)  # , random_state=None)
+
+        CV_rfc = GridSearchCV(estimator=classifier, param_grid=classifier_grid_search, cv=10)
+        CV_rfc.fit(X_train, y_train)
+
+        print(CV_rfc.best_params_)

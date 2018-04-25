@@ -15,6 +15,7 @@ class VisualizerHelper:
             VisualizerHelper.__whiskers_plot(data)
             # VisualizerHelper.__density_plots(data)
             VisualizerHelper.__histogram_plots(data)
+            VisualizerHelper.__pairplot(data)
 
     @staticmethod
     def __correlation_matrix_plot(data):
@@ -77,3 +78,7 @@ class VisualizerHelper:
         data.hist()
         plt.show()
         # plt.savefig('plots/histogram_plots.png', bbox_inches='tight')
+
+    @staticmethod
+    def __pairplot(data):
+        sns.pairplot(data, hue='length')
