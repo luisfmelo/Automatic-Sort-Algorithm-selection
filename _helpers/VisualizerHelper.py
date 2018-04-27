@@ -9,12 +9,12 @@ class VisualizerHelper:
     def make_plot(plot, data):
         data = data.drop(['<built-in function id>', 'Unnamed: 0', 'id'], axis=1)
         if plot == 'all':
-            VisualizerHelper.__correlation_matrix_plot(data)
-            VisualizerHelper.__triangle_correlation_matrix_plot(data)
-            VisualizerHelper.__scatter_matrix_plot(data)
-            VisualizerHelper.__whiskers_plot(data)
-            # VisualizerHelper.__density_plots(data)
-            VisualizerHelper.__histogram_plots(data)
+            # VisualizerHelper.__correlation_matrix_plot(data)
+            # VisualizerHelper.__triangle_correlation_matrix_plot(data)
+            # VisualizerHelper.__scatter_matrix_plot(data)
+            # VisualizerHelper.__whiskers_plot(data)
+            # # VisualizerHelper.__density_plots(data)
+            # VisualizerHelper.__histogram_plots(data)
             VisualizerHelper.__pairplot(data)
 
     @staticmethod

@@ -43,8 +43,26 @@ test_size = 0.1
 
 parameters = {'criterion': 'gini', 'max_depth': 6, 'max_features': 'log2', 'n_estimators': 500}
 
-bin_model = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
-GenericModel.predict(bin_model, feature_cols, output_file_name)
+# bin_model = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
+# GenericModel.predict(bin_model, feature_cols, output_file_name)
 
+# feature_cols = [
+#     'length',
+#     'max',
+#     'min',
+#     'dist_min_max',
+#     # 'average',
+#     # 'mean',
+#     # 'q1', 'q2', 'q3',
+#     # 'std_deviation',
+#     # 'variance',
+#     'avg_diff',
+#     'sorted_percentage',
+#     # 'target'
+# ]
+#
+# bin_model = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
+# GenericModel.predict(bin_model, feature_cols, output_file_name)
 
+# GenericModel.recursive_feature_elimination(feature_cols, algorithm, parameters)
 # GenericModel.grid_search(algorithm, feature_cols, test_size)

@@ -160,12 +160,19 @@ class GenericModel:
             algorithm = {
                 'name': 'Decision Tree Classifier',
                 'function': DecisionTreeClassifier(**parameters),
+                'grid_search': {
+                    'max_depth': np.arange(3, 10),
+                    'criterion': ['gini', 'entropy']
+                }
             }
 
         elif algorithm_code == 'knn':
             algorithm = {
                 'name': 'K Neighbors Classifier',
                 'function': KNeighborsClassifier(**parameters),
+                'grid_search': {
+                    'k': np.arange(3, 9, 2)
+                }
             }
 
         elif algorithm_code == 'gaussian_naive_bayes':
@@ -191,9 +198,9 @@ class GenericModel:
                 'name': 'Random Forest',
                 'function': RandomForestClassifier(**parameters),
                 'grid_search': {
-                    'n_estimators': [200, 500],
+                    'n_estimators': [100, 200, 500, 1000],
                     'max_features': ['auto', 'sqrt', 'log2'],
-                    'max_depth': [4, 5, 6, 7, 8],
+                    'max_depth': [3, 4, 5, 6, 7, 8, 9, 10],
                     'criterion': ['gini', 'entropy']
                 }
             }
@@ -228,3 +235,28 @@ class GenericModel:
         CV_rfc.fit(X_train, y_train)
 
         print(CV_rfc.best_params_)
+
+    @staticmethod
+    def recursive_feature_elimination(feature_cols, algorithm, parameters):
+        # Recursive Feature Elimination
+        from sklearn.feature_selection import RFE
+        # create a base classifier used to evaluate a subset of attributes
+        try:
+            algorithm = GenericModel.get_algorithm(algorithm, parameters)
+            classifier = algorithm['function']
+            classifier_name = algorithm['name']
+            classifier_parameters = algorithm['parameters']
+        except ModuleNotFoundError as e:
+            return str(e)
+
+        dataset = GenericModel.DB.load_csv('../csv_files/train_features_data.csv')
+        feature_arr = [dataset.columns.get_loc(feature_name) for feature_name in feature_cols]
+        X = dataset.iloc[:, feature_arr].values
+        y = dataset.iloc[:, dataset.columns.get_loc("target")].values
+
+        # create the RFE model and select 3 attributes
+        rfe = RFE(classifier, 3)
+        rfe = rfe.fit(X, y)
+        # summarize the selection of the attributes
+        print(rfe.support_)
+        print(rfe.ranking_)
