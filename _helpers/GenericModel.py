@@ -1,3 +1,4 @@
+import json
 import pickle
 
 import numpy as np
@@ -8,6 +9,7 @@ from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
 
 from _helpers.Database import Database
@@ -155,6 +157,54 @@ class GenericModel:
         df_output.to_csv(output_file_name, index=False, columns=['Id', 'Predicted'], header=True)
 
     @staticmethod
+    def predict_with_voting_system(bin_models, feature_cols, output_file_name):
+        # Extract Features
+        chunksize = 10
+        GenericModel.extract_features(None, DIR + TEST_DATA, chunksize, 'test_features_data')
+        df_features = GenericModel.DB.get_df_from_table('test_features_data')
+
+        # load saved model from disk
+        feature_arr = [df_features.columns.get_loc(feature_name) for feature_name in feature_cols]
+        X_test_data = df_features.iloc[:, feature_arr].values
+
+        predictions = []
+        for bin_model in bin_models:
+            loaded_model = pickle.load(open(bin_model, 'rb'))
+            result = loaded_model.predict(X_test_data)
+            predictions.append(result)
+
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #  voting_system_predictions =
+        results = []
+        for i in range(len(predictions[0])):
+            how_1 = 0
+            how_2 = 0
+            for p in predictions:
+                if p[i] == 1:
+                    how_1 += 1
+                if p[i] == 2:
+                    how_2 += 1
+            if how_1 > how_2:
+                results.append(1)
+            if how_1 < how_2:
+                results.append(2)
+
+        print(results)
+
+        df_output = pd.DataFrame()
+        df_output['Id'] = df_features["id"]
+        df_output['Predicted'] = results
+
+        # save to CSV
+        df_output.to_csv(output_file_name, index=False, columns=['Id', 'Predicted'], header=True)
+
+    @staticmethod
     def get_algorithm(algorithm_code, parameters):
         if algorithm_code == 'decision_tree':
             algorithm = {
@@ -205,6 +255,15 @@ class GenericModel:
                 }
             }
 
+        elif algorithm_code == 'neural_networks':
+            algorithm = {
+                'name': 'Neural Networks',
+                'function': MLPClassifier(**parameters),
+                'grid_search': {
+                    'hidden_layer_sizes': [(5, 2), (7, 7), (128,), (128, 7)],
+                }
+            }
+
         else:
             raise ModuleNotFoundError('Algorithm not available.')
 
@@ -214,7 +273,7 @@ class GenericModel:
         return algorithm
 
     @staticmethod
-    def grid_search(algorithm, feature_cols, test_size):
+    def grid_search(algorithm, feature_cols, test_size, slack=None):
         try:
             algorithm = GenericModel.get_algorithm(algorithm, {})
             classifier = algorithm['function']
@@ -235,6 +294,42 @@ class GenericModel:
         CV_rfc.fit(X_train, y_train)
 
         print(CV_rfc.best_params_)
+        if slack is not None:
+            slack.message("Classifier: " + classifier_name)
+            slack.message("Features used: " + json.dumps(feature_cols))
+            slack.message("Best Params: ")
+            slack.message(CV_rfc.best_params_)
+            slack.message('-----------------')
+
+    @staticmethod
+    def exponential_grid_search(feature_cols, test_size):
+        algorithms = ['decision_tree', 'knn', 'random_forest']
+        subsets_feature_cols = lambda s: (
+            (s[x] for x, c in
+             enumerate("0" * (len(s) - len(bin(i)[2:])) + bin(i)[2:])
+             if int(c))
+            for i in feature_cols
+        )
+        # try:
+        #     algorithm = GenericModel.get_algorithm(algorithm, {})
+        #     classifier = algorithm['function']
+        #     classifier_name = algorithm['name']
+        #     classifier_parameters = algorithm['parameters']
+        #     classifier_grid_search = algorithm['grid_search']
+        # except ModuleNotFoundError as e:
+        #     return str(e)
+        #
+        # dataset = GenericModel.DB.load_csv('../csv_files/train_features_data.csv')
+        #
+        # feature_arr = [dataset.columns.get_loc(feature_name) for feature_name in feature_cols]
+        # X = dataset.iloc[:, feature_arr].values
+        # y = dataset.iloc[:, dataset.columns.get_loc("target")].values
+        # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)  # , random_state=None)
+        #
+        # CV_rfc = GridSearchCV(estimator=classifier, param_grid=classifier_grid_search, cv=10)
+        # CV_rfc.fit(X_train, y_train)
+        #
+        # print(CV_rfc.best_params_)
 
     @staticmethod
     def recursive_feature_elimination(feature_cols, algorithm, parameters):

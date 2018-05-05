@@ -8,3 +8,5 @@ DB_TRAIN_FEATURE_TABLE = 'train_features_data'
 DB_TEST_FEATURE_TABLE = 'test_features_data'
 DB_OUTPUT_TABLE = 'output_features'
 DB_PATH = 'sqlite:///{}/database.db'.format(DIR)
+
+SLACK_TOKEN = '8acd0498fb41a16e6b1b202ff4cd48e1'
