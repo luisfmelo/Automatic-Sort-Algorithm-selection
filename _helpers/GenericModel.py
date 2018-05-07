@@ -4,7 +4,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from sklearn import svm
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, AdaBoostClassifier, GradientBoostingClassifier
 from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
@@ -248,15 +248,10 @@ class GenericModel:
                 'name': 'Random Forest',
                 'function': RandomForestClassifier(**parameters),
                 'grid_search': {
-                    # 'n_estimators': [100, 200, 500, 1000],
-                    # 'max_features': ['auto', 'sqrt', 'log2'],
-                    # 'max_depth': [3, 4, 5, 6, 7, 8, 9, 10],
-                    # 'criterion': ['gini', 'entropy']
-
-                    'n_estimators': [10, 20],
-                    'max_features': ['auto'],
-                    'max_depth': [3, 4],
-                    'criterion': ['gini']
+                    'n_estimators': [100, 200, 500, 1000],
+                    'max_features': ['auto', 'sqrt', 'log2'],
+                    'max_depth': [3, 4, 5, 6, 7, 8, 9, 10],
+                    'criterion': ['gini', 'entropy']
                 }
             }
 
@@ -266,6 +261,38 @@ class GenericModel:
                 'function': MLPClassifier(**parameters),
                 'grid_search': {
                     'hidden_layer_sizes': [(5, 2), (7, 7), (128,), (128, 7)],
+                }
+            }
+
+        elif algorithm_code == 'extra_trees':
+            algorithm = {
+                'name': 'Extra Trees Classifier',
+                'function': ExtraTreesClassifier(**parameters),
+                'grid_search': {
+                    'n_estimators': [100, 200, 500, 1000],
+                    'min_sample_split': [1, 2, 3],
+                    'max_depth': [3, 4, 5, 6, 7, 8, 9, 10],
+                    'criterion': ['gini', 'entropy']
+                }
+            }
+
+        elif algorithm_code == 'ada_boost':
+            algorithm = {
+                'name': 'Ada Boost Classifier',
+                'function': AdaBoostClassifier(**parameters),
+                'grid_search': {
+                    'n_estimators': [50, 100, 200, 500],
+                    'learning_rate': [0.5, 1, 1.5]
+                }
+            }
+
+        elif algorithm_code == 'gradient_boost':
+            algorithm = {
+                'name': 'Gradient Boosting Classifier',
+                'function': GradientBoostingClassifier(**parameters),
+                'grid_search': {
+                    'n_estimators': [5, 50, 100, 200],
+                    'learning_rate': [0.05, 0.1, 0.5, 1, 1.5]
                 }
             }
 
@@ -308,36 +335,35 @@ class GenericModel:
 
         GenericModel.apply_model(algorithm_code, CV_rfc.best_params_, feature_cols, 'x.csv', 0.3, slack)
 
-
-    @staticmethod
-    def exponential_grid_search(feature_cols, test_size):
-        algorithms = ['decision_tree', 'knn', 'random_forest']
-        subsets_feature_cols = lambda s: (
-            (s[x] for x, c in
-             enumerate("0" * (len(s) - len(bin(i)[2:])) + bin(i)[2:])
-             if int(c))
-            for i in feature_cols
-        )
-        # try:
-        #     algorithm = GenericModel.get_algorithm(algorithm, {})
-        #     classifier = algorithm['function']
-        #     classifier_name = algorithm['name']
-        #     classifier_parameters = algorithm['parameters']
-        #     classifier_grid_search = algorithm['grid_search']
-        # except ModuleNotFoundError as e:
-        #     return str(e)
-        #
-        # dataset = GenericModel.DB.load_csv('../csv_files/train_features_data.csv')
-        #
-        # feature_arr = [dataset.columns.get_loc(feature_name) for feature_name in feature_cols]
-        # X = dataset.iloc[:, feature_arr].values
-        # y = dataset.iloc[:, dataset.columns.get_loc("target")].values
-        # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)  # , random_state=None)
-        #
-        # CV_rfc = GridSearchCV(estimator=classifier, param_grid=classifier_grid_search, cv=10)
-        # CV_rfc.fit(X_train, y_train)
-        #
-        # print(CV_rfc.best_params_)
+    # @staticmethod
+    # def exponential_grid_search(feature_cols, test_size):
+    #     algorithms = ['decision_tree', 'knn', 'random_forest']
+    #     subsets_feature_cols = lambda s: (
+    #         (s[x] for x, c in
+    #          enumerate("0" * (len(s) - len(bin(i)[2:])) + bin(i)[2:])
+    #          if int(c))
+    #         for i in feature_cols
+    #     )
+    #     # try:
+    #     #     algorithm = GenericModel.get_algorithm(algorithm, {})
+    #     #     classifier = algorithm['function']
+    #     #     classifier_name = algorithm['name']
+    #     #     classifier_parameters = algorithm['parameters']
+    #     #     classifier_grid_search = algorithm['grid_search']
+    #     # except ModuleNotFoundError as e:
+    #     #     return str(e)
+    #     #
+    #     # dataset = GenericModel.DB.load_csv('../csv_files/train_features_data.csv')
+    #     #
+    #     # feature_arr = [dataset.columns.get_loc(feature_name) for feature_name in feature_cols]
+    #     # X = dataset.iloc[:, feature_arr].values
+    #     # y = dataset.iloc[:, dataset.columns.get_loc("target")].values
+    #     # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)  # , random_state=None)
+    #     #
+    #     # CV_rfc = GridSearchCV(estimator=classifier, param_grid=classifier_grid_search, cv=10)
+    #     # CV_rfc.fit(X_train, y_train)
+    #     #
+    #     # print(CV_rfc.best_params_)
 
     @staticmethod
     def recursive_feature_elimination(feature_cols, algorithm, parameters):
