@@ -5,3 +5,4 @@ test-arrays.csv
 train-arrays.csv
 train-target.csv
 submissions/1st/output.csv
+_helpers/__pycache__/__init__.cpython-36.pyc
