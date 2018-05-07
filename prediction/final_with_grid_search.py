@@ -59,3 +59,5 @@ for length in range(1, len(arr_feature_cols)):
 
 
 slack.send('Ended in: ' + str(datetime.now() - start_time))
+
+slack.send('...Ending')
