@@ -3,14 +3,12 @@ from slackclient import SlackClient
 from config import SLACK_TOKEN
 
 
-class Slack:
-    sc = None
+class Logger:
+    sc = SlackClient(SLACK_TOKEN)
 
-    def __init__(self):
-        self.sc = SlackClient(SLACK_TOKEN)
-
-    def send(self, msg):
-        self.sc.api_call(
+    @staticmethod
+    def send(msg):
+        Logger.sc.api_call(
             "chat.postMessage",
             channel="#ades-bot",
             text=msg

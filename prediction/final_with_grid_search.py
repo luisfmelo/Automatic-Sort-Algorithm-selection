@@ -2,12 +2,11 @@ from datetime import datetime
 from itertools import combinations
 
 from _helpers.GenericModel import GenericModel
-from _helpers.SlackHelper import Slack
+from _helpers.LoggerHelper import Logger
 from config import DB_TEST_FEATURE_TABLE, DIR, TEST_DATA, TRAIN_TARGET_OUTPUT, TRAIN_DATA, DB_TRAIN_FEATURE_TABLE
 
 CHUNKSIZE = 10
-slack = Slack()
-slack.send('Starting...')
+Logger.send('Starting...')
 
 # FEATURE ENGINEERING
 start_time = datetime.now()
@@ -45,19 +44,19 @@ for length in range(1, len(arr_feature_cols)):
         for algorithm in algorithms:
             try:
                 model_start_time = datetime.now()
-                bin_model = GenericModel.apply_model(algorithm, {}, feature_cols, 'test.csv', 0.3, slack)
-                slack.send('Partially End in: ' + str(datetime.now() - model_start_time))
+                bin_model = GenericModel.apply_model(algorithm, {}, feature_cols, 'test.csv', 0.3)
+                Logger.send('Partially End in: ' + str(datetime.now() - model_start_time))
             except Exception as e:
-                slack.send('Exception: ' + str(e))
+                Logger.send('Exception: ' + str(e))
         for algorithm in algorithms_for_grid:
             try:
                 grid_start_time = datetime.now()
-                GenericModel.grid_search(algorithm, feature_cols, 0.3, slack)
-                slack.send('Partially End in: ' + str(datetime.now() - grid_start_time))
+                GenericModel.grid_search(algorithm, feature_cols, 0.3)
+                Logger.send('Partially End in: ' + str(datetime.now() - grid_start_time))
             except Exception as e:
-                slack.send('Exception: ' + str(e))
+                Logger.send('Exception: ' + str(e))
 
 
-slack.send('Ended in: ' + str(datetime.now() - start_time))
+Logger.send('Ended in: ' + str(datetime.now() - start_time))
 
-slack.send('...Ending')
+Logger.send('...Ending')

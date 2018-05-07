@@ -1,5 +1,6 @@
 import json
 import pickle
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -13,10 +14,12 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
 
 from _helpers.Database import Database
+from _helpers.LoggerHelper import Logger
 from config import DIR, TEST_DATA, DB_PATH
 
 
 class GenericModel:
+    CLASSES = [10, 100, 1000, 10000, 100000, 1000000]
     DB = Database(DB_PATH)
 
     @staticmethod
@@ -86,7 +89,7 @@ class GenericModel:
         }
 
     @staticmethod
-    def apply_model(algorithm, parameters, feature_cols, model_file, test_size=0.15, slack=None):
+    def apply_model(algorithm, parameters, feature_cols, model_file, test_size=0.15):
         try:
             algorithm = GenericModel.get_algorithm(algorithm, parameters)
             classifier = algorithm['function']
@@ -120,17 +123,12 @@ class GenericModel:
         # Get Accuracy
         accuracy = accuracy_score(y_test, y_pred) * 100
 
-        print('--------------------------------------------')
-        print(classifier_name)
-        print('Parameters: ' + classifier_parameters)
-        print("Accuracy with Decision Tree is: {} %".format(accuracy))
-        print('Confusion Matrix: {}'.format(cm))
-        if slack is not None:
-            slack.send('--------------------------------------------')
-            slack.send(classifier_name)
-            slack.send('Parameters: ' + classifier_parameters)
-            slack.send("Accuracy with Decision Tree is: {} %".format(accuracy))
-            slack.send('Confusion Matrix: {}'.format(str(cm)))
+        Logger.send('--------------------------------------------')
+        Logger.send(classifier_name)
+        Logger.send('Parameters: ' + classifier_parameters)
+        Logger.send("Accuracy is: {} %".format(accuracy))
+        Logger.send('Confusion Matrix: {}'.format(str(cm)))
+        Logger.send('--------------------------------------------')
 
         # PUT EVERYTHING TO TRAIN
         classifier.fit(X, y)
@@ -140,6 +138,55 @@ class GenericModel:
         pickle.dump(classifier, open(filename, 'wb'))
 
         return filename
+
+    # @staticmethod
+    # def apply_model_by_class(algorithm_obj, class_length, test_size=0.15, slack=None):
+    #     try:
+    #         algorithm = GenericModel.get_algorithm(algorithm_obj['name'], algorithm_obj['parameters'])
+    #         classifier = algorithm['function']
+    #         classifier_name = algorithm['name']
+    #         classifier_parameters = algorithm['parameters']
+    #     except ModuleNotFoundError as e:
+    #         return str(e)
+    #
+    #     dataset = GenericModel.DB.load_csv(DIR + 'csv_files/train_features_data.csv')
+    #
+    #     feature_arr = [dataset.columns.get_loc(feature_name) for feature_name in algorithm_obj['feature_cols']]
+    #     X = dataset.iloc[:, feature_arr][dataset.length == class_length].values
+    #
+    #     y = dataset.iloc[:, dataset.columns.get_loc("target")][dataset.length == class_length].values
+    #
+    #     # Get Train and Test Data
+    #     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)  # , random_state=None)
+    #
+    #     # Fit to model
+    #     classifier.fit(X_train, y_train)
+    #
+    #     # Predict Output
+    #     y_pred = classifier.predict(X_test)
+    #
+    #     # Confusion Matrix
+    #     cm = confusion_matrix(y_test, y_pred)
+    #
+    #     # Get Accuracy
+    #     accuracy = accuracy_score(y_test, y_pred) * 100
+    #
+    #     if slack is not None:
+    #         slack.send('--------------------------------------------')
+    #         slack.send(classifier_name)
+    #         slack.send('Parameters: ' + classifier_parameters)
+    #         slack.send("Accuracy with Decision Tree is: {} %".format(accuracy))
+    #         slack.send('Confusion Matrix: {}'.format(str(cm)))
+    #
+    #     # PUT EVERYTHING TO TRAIN
+    #     classifier.fit(X, y)
+    #
+    #     # save the model to disk
+    #     model_name = 'by_class_' + str(class_length) + '_' + str(datetime.now()) + '.sav'
+    #     filename = DIR + 'bin_models/' + model_name
+    #     pickle.dump(classifier, open(filename, 'wb'))
+    #
+    #     return filename
 
     @staticmethod
     def predict(bin_model, feature_cols, output_file_name):
@@ -202,6 +249,53 @@ class GenericModel:
 
         # save to CSV
         df_output.to_csv(output_file_name, index=False, columns=['Id', 'Predicted'], header=True)
+
+    # @staticmethod
+    # def predict_with_voting_system_by_class(classes, output_file_name):
+    #     # Extract Features
+    #     chunksize = 10
+    #     GenericModel.extract_features(None, DIR + TEST_DATA, chunksize, 'test_features_data')
+    #     df_features = GenericModel.DB.get_df_from_table('test_features_data')
+    #
+    #     predictions = []
+    #
+    #     # for each class
+    #     for _class in classes:
+    #
+    #         # for each model to apply voting system
+    #         for bin_model in _class['models']:
+    #             # load saved model from disk
+    #             feature_arr = [df_features.columns.get_loc(feature_name) for feature_name in bin_model['feature_cols']]
+    #             X_test_data = df_features.iloc[:, feature_arr].values
+    #
+    #             loaded_model = pickle.load(open(bin_model, 'rb'))
+    #             result = loaded_model.predict(X_test_data)
+    #             predictions.append(result)
+    #
+    #
+    #     #  voting_system_predictions =
+    #     results = []
+    #     for i in range(len(predictions[0])):
+    #         how_1 = 0
+    #         how_2 = 0
+    #         for p in predictions:
+    #             if p[i] == 1:
+    #                 how_1 += 1
+    #             if p[i] == 2:
+    #                 how_2 += 1
+    #         if how_1 > how_2:
+    #             results.append(1)
+    #         if how_1 < how_2:
+    #             results.append(2)
+    #
+    #     print(results)
+    #
+    #     df_output = pd.DataFrame()
+    #     df_output['Id'] = df_features["id"]
+    #     df_output['Predicted'] = results
+    #
+    #     # save to CSV
+    #     df_output.to_csv(output_file_name, index=False, columns=['Id', 'Predicted'], header=True)
 
     @staticmethod
     def get_algorithm(algorithm_code, parameters):
@@ -305,7 +399,7 @@ class GenericModel:
         return algorithm
 
     @staticmethod
-    def grid_search(algorithm_code, feature_cols, test_size, slack=None):
+    def grid_search(algorithm_code, feature_cols, test_size):
         try:
             algorithm = GenericModel.get_algorithm(algorithm_code, {})
             classifier = algorithm['function']
@@ -325,45 +419,14 @@ class GenericModel:
         CV_rfc = GridSearchCV(estimator=classifier, param_grid=classifier_grid_search, cv=10)
         CV_rfc.fit(X_train, y_train)
 
-        print(CV_rfc.best_params_)
-        if slack is not None:
-            slack.send('-----------------GRID---------------------------')
-            slack.send("Classifier: " + classifier_name)
-            slack.send("Features used: " + json.dumps(feature_cols))
-            slack.send("Best Params: ")
-            slack.send(CV_rfc.best_params_)
+        Logger.send('------------------GRID--------------------------')
+        Logger.send(classifier_name)
+        Logger.send('Parameters: ' + classifier_parameters)
+        Logger.send("Features used: " + json.dumps(feature_cols))
+        Logger.send("Best Params: " + str(CV_rfc.best_params_) )
+        Logger.send('------------------------------------------------')
 
-        GenericModel.apply_model(algorithm_code, CV_rfc.best_params_, feature_cols, 'x.csv', 0.3, slack)
-
-    # @staticmethod
-    # def exponential_grid_search(feature_cols, test_size):
-    #     algorithms = ['decision_tree', 'knn', 'random_forest']
-    #     subsets_feature_cols = lambda s: (
-    #         (s[x] for x, c in
-    #          enumerate("0" * (len(s) - len(bin(i)[2:])) + bin(i)[2:])
-    #          if int(c))
-    #         for i in feature_cols
-    #     )
-    #     # try:
-    #     #     algorithm = GenericModel.get_algorithm(algorithm, {})
-    #     #     classifier = algorithm['function']
-    #     #     classifier_name = algorithm['name']
-    #     #     classifier_parameters = algorithm['parameters']
-    #     #     classifier_grid_search = algorithm['grid_search']
-    #     # except ModuleNotFoundError as e:
-    #     #     return str(e)
-    #     #
-    #     # dataset = GenericModel.DB.load_csv('../csv_files/train_features_data.csv')
-    #     #
-    #     # feature_arr = [dataset.columns.get_loc(feature_name) for feature_name in feature_cols]
-    #     # X = dataset.iloc[:, feature_arr].values
-    #     # y = dataset.iloc[:, dataset.columns.get_loc("target")].values
-    #     # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)  # , random_state=None)
-    #     #
-    #     # CV_rfc = GridSearchCV(estimator=classifier, param_grid=classifier_grid_search, cv=10)
-    #     # CV_rfc.fit(X_train, y_train)
-    #     #
-    #     # print(CV_rfc.best_params_)
+        GenericModel.apply_model(algorithm_code, CV_rfc.best_params_, feature_cols, 'x.csv', 0.3)
 
     @staticmethod
     def recursive_feature_elimination(feature_cols, algorithm, parameters):
