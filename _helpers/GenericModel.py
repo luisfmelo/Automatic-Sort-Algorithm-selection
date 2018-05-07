@@ -34,7 +34,7 @@ class GenericModel:
 
         # If table already exists and is not to force, we only save that info to a csv file
         if GenericModel.DB.table_exists(table_name) and not FORCE:
-            GenericModel.DB.db_table_to_csv(table_name, '../csv_files/{}.csv'.format(table_name))
+            GenericModel.DB.db_table_to_csv(table_name, DIR + 'csv_files/{}.csv'.format(table_name))
             return 0
 
         iterations = 0
@@ -86,7 +86,7 @@ class GenericModel:
         }
 
     @staticmethod
-    def apply_model(algorithm, parameters, feature_cols, model_file, test_size=0.15):
+    def apply_model(algorithm, parameters, feature_cols, model_file, test_size=0.15, slack=None):
         try:
             algorithm = GenericModel.get_algorithm(algorithm, parameters)
             classifier = algorithm['function']
@@ -95,7 +95,7 @@ class GenericModel:
         except ModuleNotFoundError as e:
             return str(e)
 
-        dataset = GenericModel.DB.load_csv('../csv_files/train_features_data.csv')
+        dataset = GenericModel.DB.load_csv(DIR + 'csv_files/train_features_data.csv')
 
         feature_arr = [dataset.columns.get_loc(feature_name) for feature_name in feature_cols]
         X = dataset.iloc[:, feature_arr].values
@@ -125,12 +125,18 @@ class GenericModel:
         print('Parameters: ' + classifier_parameters)
         print("Accuracy with Decision Tree is: {} %".format(accuracy))
         print('Confusion Matrix: {}'.format(cm))
+        if slack is not None:
+            slack.send('--------------------------------------------')
+            slack.send(classifier_name)
+            slack.send('Parameters: ' + classifier_parameters)
+            slack.send("Accuracy with Decision Tree is: {} %".format(accuracy))
+            slack.send('Confusion Matrix: {}'.format(str(cm)))
 
         # PUT EVERYTHING TO TRAIN
         classifier.fit(X, y)
 
         # save the model to disk
-        filename = '../bin_models/' + model_file
+        filename = DIR + 'bin_models/' + model_file
         pickle.dump(classifier, open(filename, 'wb'))
 
         return filename
@@ -173,13 +179,6 @@ class GenericModel:
             result = loaded_model.predict(X_test_data)
             predictions.append(result)
 
-        #
-        #
-        #
-        #
-        #
-        #
-        #
         #  voting_system_predictions =
         results = []
         for i in range(len(predictions[0])):
@@ -221,14 +220,15 @@ class GenericModel:
                 'name': 'K Neighbors Classifier',
                 'function': KNeighborsClassifier(**parameters),
                 'grid_search': {
-                    'k': np.arange(3, 9, 2)
+                    'k': np.arange(3, 9, 2),
+                    'algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
                 }
             }
 
         elif algorithm_code == 'gaussian_naive_bayes':
             algorithm = {
                 'name': 'Gaussian Naive Bayes Classifier',
-                'function': GaussianNB(**parameters),
+                'function': GaussianNB(**parameters)
             }
 
         elif algorithm_code == 'multinomial_naive_bayes':
@@ -248,10 +248,15 @@ class GenericModel:
                 'name': 'Random Forest',
                 'function': RandomForestClassifier(**parameters),
                 'grid_search': {
-                    'n_estimators': [100, 200, 500, 1000],
-                    'max_features': ['auto', 'sqrt', 'log2'],
-                    'max_depth': [3, 4, 5, 6, 7, 8, 9, 10],
-                    'criterion': ['gini', 'entropy']
+                    # 'n_estimators': [100, 200, 500, 1000],
+                    # 'max_features': ['auto', 'sqrt', 'log2'],
+                    # 'max_depth': [3, 4, 5, 6, 7, 8, 9, 10],
+                    # 'criterion': ['gini', 'entropy']
+
+                    'n_estimators': [10, 20],
+                    'max_features': ['auto'],
+                    'max_depth': [3, 4],
+                    'criterion': ['gini']
                 }
             }
 
@@ -273,9 +278,9 @@ class GenericModel:
         return algorithm
 
     @staticmethod
-    def grid_search(algorithm, feature_cols, test_size, slack=None):
+    def grid_search(algorithm_code, feature_cols, test_size, slack=None):
         try:
-            algorithm = GenericModel.get_algorithm(algorithm, {})
+            algorithm = GenericModel.get_algorithm(algorithm_code, {})
             classifier = algorithm['function']
             classifier_name = algorithm['name']
             classifier_parameters = algorithm['parameters']
@@ -283,7 +288,7 @@ class GenericModel:
         except ModuleNotFoundError as e:
             return str(e)
 
-        dataset = GenericModel.DB.load_csv('../csv_files/train_features_data.csv')
+        dataset = GenericModel.DB.load_csv(DIR + 'csv_files/train_features_data.csv')
 
         feature_arr = [dataset.columns.get_loc(feature_name) for feature_name in feature_cols]
         X = dataset.iloc[:, feature_arr].values
@@ -295,11 +300,14 @@ class GenericModel:
 
         print(CV_rfc.best_params_)
         if slack is not None:
-            slack.message("Classifier: " + classifier_name)
-            slack.message("Features used: " + json.dumps(feature_cols))
-            slack.message("Best Params: ")
-            slack.message(CV_rfc.best_params_)
-            slack.message('-----------------')
+            slack.send('-----------------GRID---------------------------')
+            slack.send("Classifier: " + classifier_name)
+            slack.send("Features used: " + json.dumps(feature_cols))
+            slack.send("Best Params: ")
+            slack.send(CV_rfc.best_params_)
+
+        GenericModel.apply_model(algorithm_code, CV_rfc.best_params_, feature_cols, 'x.csv', 0.3, slack)
+
 
     @staticmethod
     def exponential_grid_search(feature_cols, test_size):

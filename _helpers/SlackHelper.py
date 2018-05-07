@@ -7,11 +7,12 @@ class Slack:
     sc = None
 
     def __init__(self):
-        sc = SlackClient(SLACK_TOKEN)
+        self.sc = SlackClient(SLACK_TOKEN)
 
     def send(self, msg):
         self.sc.api_call(
             "chat.postMessage",
-            channel="#ades-results",
+            channel="#ades-bot",
             text=msg
         )
+        print(msg)

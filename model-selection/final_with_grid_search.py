@@ -1,4 +1,5 @@
 from datetime import datetime
+from itertools import combinations
 
 from _helpers.GenericModel import GenericModel
 from _helpers.SlackHelper import Slack
@@ -34,14 +35,26 @@ arr_feature_cols = [
     'sorted_percentage'
 ]
 
+algorithms = ['random_forest', 'knn', 'decision_tree']
 
-algorithms = ['svm', 'random_forest', 'multinomial_naive_bayes', 'gaussian_naive_bayes', 'knn', 'decision_tree']
+for length in range(1, len(arr_feature_cols)):
+    comb = combinations(arr_feature_cols, length)
 
-for algorithm in algorithms:
-    from itertools import combinations
+    for feature_cols in list(comb):
+        for algorithm in ['svm', 'gaussian_naive_bayes', 'multinomial_naive_bayes']:
+            try:
+                model_start_time = datetime.now()
+                bin_model = GenericModel.apply_model(algorithm, {}, feature_cols, 'test.csv', 0.3, slack)
+                slack.send('Partially End in: ' + str(datetime.now() - model_start_time))
+            except Exception as e:
+                slack.send('Exception: ' + str(e))
+        for algorithm in algorithms:
+            try:
+                grid_start_time = datetime.now()
+                GenericModel.grid_search(algorithm, feature_cols, 0.3, slack)
+                slack.send('Partially End in: ' + str(datetime.now() - grid_start_time))
+            except Exception as e:
+                slack.send('Exception: ' + str(e))
 
-    for length in range(1, 6):
-        comb = combinations([1, 2, 3, 4, 5, 6], length)
 
-        for feature_cols in list(comb):
-            GenericModel.grid_search(algorithm, feature_cols, 0.3, slack)
+slack.send('Ended in: ' + str(datetime.now() - start_time))
