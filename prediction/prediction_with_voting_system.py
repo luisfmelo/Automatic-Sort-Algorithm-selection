@@ -21,7 +21,7 @@ GenericModel.extract_features(None, DIR + TEST_DATA, CHUNKSIZE, DB_TEST_FEATURE_
 ###########################################################################
 
 bin_models = []
-feature_cols = ['length', 'sorted_percentage', 'dist_min_max']
+feature_cols = ['length']  #, 'sorted_percentage', 'dist_min_max']
 
 # RANDOM FOREST
 algorithm = 'random_forest'
@@ -30,24 +30,35 @@ parameters = {'criterion': 'gini', 'max_depth': 6, 'max_features': 'log2', 'n_es
 bin_models.append(GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size))
 
 # DECISION TREE
-algorithm = 'decision_tree'
-bin_model_file_name = 'decision_tree_with_length.sav'
-parameters = {'criterion': 'entropy', 'random_state': 0}
-bin_models.append(GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size))
+# algorithm = 'decision_tree'
+# bin_model_file_name = 'decision_tree_with_length.sav'
+# parameters = {'criterion': 'entropy', 'random_state': 0}
+# bin_models.append(GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size))
 
 # SVM
 algorithm = 'svm'
 bin_model_file_name = 'svm.sav'
-parameters = {"gamma": 0.001}
+parameters = {}  # {"gamma": 0.001}
 bin_models.append(GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size))
 
 # Neural Networks
 # algorithm = 'neural_networks'
 # bin_model_file_name = 'neural_networks.sav'
-# parameters = {"solver": "lbfgs", "alpha": "1e-5", "hidden_layer_sizes": (5, 2), "random_state": 1}
+# parameters = {
+#     # "solver": "lbfgs",
+#     # "alpha": "0.00005",
+#     "hidden_layer_sizes": (5, 2),
+#     # "random_state": 0
+# }
 # bin_models.append(GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size))
 
-GenericModel.predict_with_voting_system(bin_models, feature_cols, 'voting_system.csv')
+# Gradient Boosting Classifier
+algorithm = 'gradient_boost'
+bin_model_file_name = 'gradient_boost.sav'
+parameters = {"n_estimators": 50, "learning_rate": 0.05}
+bin_models.append(GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size))
+
+GenericModel.predict_with_voting_system(bin_models, feature_cols, 'new_voting_system.csv')
 
 # feature_cols = [
 #     'length',

@@ -126,6 +126,7 @@ class GenericModel:
         Logger.send('--------------------------------------------')
         Logger.send(classifier_name)
         Logger.send('Parameters: ' + classifier_parameters)
+        Logger.send("Features used: " + json.dumps(feature_cols))
         Logger.send("Accuracy is: {} %".format(accuracy))
         Logger.send('Confusion Matrix: {}'.format(str(cm)))
         Logger.send('--------------------------------------------')
