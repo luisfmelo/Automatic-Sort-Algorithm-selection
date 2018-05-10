@@ -8,9 +8,18 @@ class Logger:
 
     @staticmethod
     def send(msg):
+        # Logger.sc.api_call(
+        #     "chat.postMessage",
+        #     channel="#ades-bot",
+        #     text=msg
+        # )
+        print(msg)
+
+    @staticmethod
+    def send_personal(msg):
         Logger.sc.api_call(
             "chat.postMessage",
-            channel="#ades-bot",
+            channel="@luismelo7",
             text=msg
         )
         print(msg)
