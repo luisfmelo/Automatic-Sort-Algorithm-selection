@@ -21,13 +21,14 @@ GenericModel.extract_features(None, DIR + TEST_DATA, CHUNKSIZE, DB_TEST_FEATURE_
 ###########################################################################
 
 bin_models = []
-feature_cols = ['length']  #, 'sorted_percentage', 'dist_min_max']
+feature_cols = ['length', 'sorted_percentage', 'dist_min_max']
 
 # RANDOM FOREST
 algorithm = 'random_forest'
 bin_model_file_name = 'random_forest.sav'
 parameters = {'criterion': 'gini', 'max_depth': 6, 'max_features': 'log2', 'n_estimators': 500}
-bin_models.append(GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size))
+model_file, _ = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
+bin_models.append(model_file)
 
 # DECISION TREE
 # algorithm = 'decision_tree'
@@ -36,10 +37,11 @@ bin_models.append(GenericModel.apply_model(algorithm, parameters, feature_cols, 
 # bin_models.append(GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size))
 
 # SVM
-algorithm = 'svm'
-bin_model_file_name = 'svm.sav'
+algorithm = 'ada_boost'
+bin_model_file_name = 'ada_boost.sav'
 parameters = {}  # {"gamma": 0.001}
-bin_models.append(GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size))
+model_file, _ = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
+bin_models.append(model_file)
 
 # Neural Networks
 # algorithm = 'neural_networks'
@@ -56,7 +58,8 @@ bin_models.append(GenericModel.apply_model(algorithm, parameters, feature_cols, 
 algorithm = 'gradient_boost'
 bin_model_file_name = 'gradient_boost.sav'
 parameters = {"n_estimators": 50, "learning_rate": 0.05}
-bin_models.append(GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size))
+model_file, _ = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
+bin_models.append(model_file)
 
 GenericModel.predict_with_voting_system(bin_models, feature_cols, 'new_voting_system.csv')
 

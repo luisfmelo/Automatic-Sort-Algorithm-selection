@@ -44,7 +44,7 @@ for length in range(1, len(arr_feature_cols)):
         for algorithm in algorithms:
             try:
                 model_start_time = datetime.now()
-                bin_model = GenericModel.apply_model(algorithm, {}, feature_cols, 'test.csv', 0.3)
+                bin_model, _ = GenericModel.apply_model(algorithm, {}, feature_cols, 'test.csv', 0.3)
                 Logger.send('Partially End in: ' + str(datetime.now() - model_start_time))
             except Exception as e:
                 Logger.send('Exception: ' + str(e))

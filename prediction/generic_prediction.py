@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 
 from _helpers.GenericModel import GenericModel
@@ -20,7 +19,7 @@ else:
 
 GenericModel.extract_features(None, DIR + TEST_DATA, CHUNKSIZE, DB_TEST_FEATURE_TABLE, FORCE=False)
 
-feature_cols = ['length', 'sorted_percentage', 'dist_min_max']
+feature_cols = ["length", "average"]
 
 # DECISION TREE
 # algorithm = 'decision_tree'
@@ -33,7 +32,7 @@ feature_cols = ['length', 'sorted_percentage', 'dist_min_max']
 #     'random_state': 0
 # }
 #
-# bin_model = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
+# bin_model, _ = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
 # GenericModel.predict(bin_model, feature_cols, output_file_name)
 #
 # # RANDOM FOREST
@@ -44,7 +43,7 @@ feature_cols = ['length', 'sorted_percentage', 'dist_min_max']
 #
 # parameters = {'criterion': 'gini', 'max_depth': 6, 'max_features': 'log2', 'n_estimators': 500}
 
-# bin_model = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
+# bin_model, _ = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
 # GenericModel.predict(bin_model, feature_cols, output_file_name)
 
 # feature_cols = [
@@ -62,7 +61,7 @@ feature_cols = ['length', 'sorted_percentage', 'dist_min_max']
 #     # 'target'
 # ]
 #
-# bin_model = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
+# bin_model, _ = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
 # GenericModel.predict(bin_model, feature_cols, output_file_name)
 
 # GenericModel.recursive_feature_elimination(feature_cols, algorithm, parameters)
@@ -70,46 +69,105 @@ feature_cols = ['length', 'sorted_percentage', 'dist_min_max']
 
 
 # Neural Networks
-algorithm = 'neural_networks'
-bin_model_file_name = 'neural_networks.sav'
-output_file_name = 'neural_networks.csv'
-test_size = 0.3
+# algorithm = 'neural_networks'
+# bin_model_file_name = 'neural_networks.sav'
+# output_file_name = 'neural_networks.csv'
+# test_size = 0.3
+#
+# parameters = {"solver": 'lbfgs', "alpha": 1e-5, "hidden_layer_sizes": (5, 2), "random_state": 1}
+#
+# bin_model, _ = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
+# GenericModel.predict(bin_model, feature_cols, output_file_name)
+#
+# # Extra Trees
+# algorithm = 'extra_trees'
+# bin_model_file_name = 'extra_trees.sav'
+# output_file_name = 'extra_trees.csv'
+# test_size = 0.3
+#
+# parameters = {"n_estimators": 10, "criterion": 'gini', "max_depth": None, "min_samples_split": 2, "random_state": 0}
+#
+# bin_model, _ = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
+# GenericModel.predict(bin_model, feature_cols, output_file_name)
+#
+# # Ada Boost
+# algorithm = 'ada_boost'
+# bin_model_file_name = 'ada_boost.sav'
+# output_file_name = 'ada_boost.csv'
+# test_size = 0.3
+#
+# parameters = {"n_estimators": 50, "learning_rate": 0.5, "random_state": None}
+#
+# bin_model, _ = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
+# GenericModel.predict(bin_model, feature_cols, output_file_name)
+#
+# # Gradient Boost
+# algorithm = 'gradient_boost'
+# bin_model_file_name = 'gradient_boost.sav'
+# output_file_name = 'gradient_boost.csv'
+# test_size = 0.3
+#
+# parameters = {"n_estimators": 100, "learning_rate": 0.05}
+#
+# bin_model, _ = GenericModel.apply_model(algorithm, parameters, ['length', 'avg_diff'], bin_model_file_name, test_size)
+# GenericModel.predict(bin_model, feature_cols, output_file_name)
 
-parameters = {"solver": 'lbfgs', "alpha": 1e-5, "hidden_layer_sizes": (5, 2), "random_state": 1}
 
-bin_model = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
-GenericModel.predict(bin_model, feature_cols, output_file_name)
 
-# Extra Trees
-algorithm = 'extra_trees'
-bin_model_file_name = 'extra_trees.sav'
-output_file_name = 'extra_trees.csv'
-test_size = 0.3
 
-parameters = {"n_estimators": 10, "criterion": 'gini', "max_depth": None, "min_samples_split": 2, "random_state": 0}
-
-bin_model = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
-GenericModel.predict(bin_model, feature_cols, output_file_name)
-
-# Ada Boost
-algorithm = 'ada_boost'
-bin_model_file_name = 'ada_boost.sav'
-output_file_name = 'ada_boost.csv'
-test_size = 0.3
-
-parameters = {"base_estimator": None, "n_estimators": 50, "learning_rate": 1.0, "random_state": None}
-
-bin_model = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
-GenericModel.predict(bin_model, feature_cols, output_file_name)
 
 # Gradient Boost
 algorithm = 'gradient_boost'
-bin_model_file_name = 'gradient_boost.sav'
-output_file_name = 'gradient_boost.csv'
+bin_model_file_name = 'test1.sav'
+output_file_name = 'test1_gradient_boost.csv'
 test_size = 0.3
 
-parameters = {"loss": 'deviance', "learning_rate": 0.1, "n_estimators": 5, "subsample": 0.3,
-              "min_samples_split": 2, "min_samples_leaf": 1, "max_depth": 3, "init": None, "random_state": None, "max_features": None, "verbose": 2}
+parameters = {"n_estimators": 100, "learning_rate": 0.05}
 
-bin_model = GenericModel.apply_model(algorithm, parameters, feature_cols, bin_model_file_name, test_size)
-GenericModel.predict(bin_model, feature_cols, output_file_name)
+bin_model, _ = GenericModel.apply_model(algorithm, parameters, ['length', 'avg_diff'], bin_model_file_name, test_size)
+GenericModel.predict(bin_model, ['length', 'avg_diff'], output_file_name)
+
+# RANDOM FOREST
+algorithm = 'random_forest'
+bin_model_file_name = 'test2.sav'
+output_file_name = 'test2_random_forest_output.csv'
+test_size = 0.1
+
+parameters = {'criterion': 'entropy', 'max_depth': 8, 'max_features': 'sqrt', 'n_estimators': 100}
+
+bin_model, _ = GenericModel.apply_model(algorithm, parameters, ['length', 'avg_diff'], bin_model_file_name, test_size)
+GenericModel.predict(bin_model, ['length', 'avg_diff'], output_file_name)
+
+# Ada Boost
+algorithm = 'ada_boost'
+bin_model_file_name = 'test3.sav'
+output_file_name = 'test3_ada_boost.csv'
+test_size = 0.3
+
+parameters = {"n_estimators": 100, "learning_rate": 1}
+
+bin_model, _ = GenericModel.apply_model(algorithm, parameters, ['length', 'avg_diff'], bin_model_file_name, test_size)
+GenericModel.predict(bin_model, ['length', 'avg_diff'], output_file_name)
+
+# SVM
+algorithm = 'svm'
+bin_model_file_name = 'test4.sav'
+output_file_name = 'test4_svm.csv'
+test_size = 0.3
+
+parameters = {}
+
+bin_model, _ = GenericModel.apply_model(algorithm, parameters, ['length', 'sorted_percentage'], bin_model_file_name, test_size)
+GenericModel.predict(bin_model, ['length', 'sorted_percentage'], output_file_name)
+
+
+# Gradient Boost 2
+algorithm = 'gradient_boost'
+bin_model_file_name = 'test5.sav'
+output_file_name = 'test5_gradient_boost.csv'
+test_size = 0.3
+
+parameters = {"n_estimators": 50, "learning_rate": 0.05}
+
+bin_model, _ = GenericModel.apply_model(algorithm, parameters, ['length', 'sorted_percentage'], bin_model_file_name, test_size)
+GenericModel.predict(bin_model, ['length', 'sorted_percentage'], output_file_name)
