@@ -23,17 +23,17 @@ def bulk(algorithm, length_class):
         if result['accuracy'] > best_match['accuracy']:
             best_match = result
 
-    Logger.send_personal('************************************')
-    Logger.send_personal('Algorithm: {}'.format(algorithm))
+    Logger.send_channel_grid_search('************************************')
+    Logger.send_channel_grid_search('Algorithm: {}'.format(algorithm))
 
     if best_match['parameters'] is not None:
-        Logger.send_personal('Best Match')
-        Logger.send_personal('Accuracy: {} %'.format(str(best_match['accuracy'])))
-        Logger.send_personal('Parameters: {}'.format(str(best_match['parameters'])))
-        Logger.send_personal('Features: {}'.format('[{}]'.format(', '.join(best_match['features']))))
+        Logger.send_channel_grid_search('Best Match')
+        Logger.send_channel_grid_search('Accuracy: {} %'.format(str(best_match['accuracy'])))
+        Logger.send_channel_grid_search('Parameters: {}'.format(str(best_match['parameters'])))
+        Logger.send_channel_grid_search('Features: {}'.format('[{}]'.format(', '.join(best_match['features']))))
     else:
-        Logger.send_personal('Not Found')
-    Logger.send_personal('************************************')
+        Logger.send_channel_grid_search('Not Found')
+    Logger.send_channel_grid_search('************************************')
 
 
 algorithms = [
@@ -44,5 +44,7 @@ algorithms = [
 lengths = [100, 10000]
 
 for l in lengths:
-    for a in algorithms:
+    Logger.send_personal('Length: ' + str(l))
+    for i, a in enumerate(algorithms):
+        Logger.send_personal('Algorithm ' + str(i + 1) + '/' + str(len(algorithms)) + ': ' + str(a))
         bulk(a, l)

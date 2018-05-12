@@ -16,6 +16,15 @@ class Logger:
         print(msg)
 
     @staticmethod
+    def send_channel_grid_search(msg):
+        Logger.sc.api_call(
+            "chat.postMessage",
+            channel="#ades-grid-search",
+            text=msg
+        )
+        print(msg)
+
+    @staticmethod
     def send_personal(msg):
         Logger.sc.api_call(
             "chat.postMessage",

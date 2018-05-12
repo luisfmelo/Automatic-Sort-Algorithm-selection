@@ -146,7 +146,7 @@ class GenericModel:
             algorithm = GenericModel.get_algorithm(algorithm_obj['name'], algorithm_obj['parameters'])
             classifier = algorithm['function']
             classifier_name = algorithm['name']
-            classifier_parameters = json.dumps(algorithm_obj['parameters'])
+            classifier_parameters = algorithm_obj['parameters']
         except ModuleNotFoundError as e:
             return str(e)
 
@@ -175,7 +175,7 @@ class GenericModel:
         Logger.send('--------------------------------------------')
         Logger.send(classifier_name)
         Logger.send('Length: {}'.format(str(class_length)))
-        Logger.send('Parameters: ' + classifier_parameters)
+        Logger.send('Parameters: ' + str(classifier_parameters).replace('\'', '\"'))
         Logger.send("Features used: " + json.dumps(algorithm_obj['feature_cols']))
         Logger.send("Accuracy is: {} %".format(accuracy))
         Logger.send('Confusion Matrix: {}'.format(str(cm)))
@@ -213,22 +213,33 @@ class GenericModel:
         df_output.to_csv(output_file_name, index=False, columns=['Id', 'Predicted'], header=True)
 
     @staticmethod
-    def predict_with_voting_system(bin_models, feature_cols, output_file_name):
+    def predict_with_voting_system(algorithm_objs, output_file_name):
+        """
+        algorithm_objs = [
+            {
+                bin_model: <string>,
+                feature_cols: [<string>, <string>, ...]
+            }
+        ]
+        :param algorithm_objs:
+        :param output_file_name:
+        :return:
+        """
         # Extract Features
         chunksize = 10
         GenericModel.extract_features(None, DIR + TEST_DATA, chunksize, 'test_features_data')
         df_features = GenericModel.DB.get_df_from_table('test_features_data')
 
-        # load saved model from disk
-        feature_arr = [df_features.columns.get_loc(feature_name) for feature_name in feature_cols]
-        X_test_data = df_features.iloc[:, feature_arr].values
-
         predictions = []
-        for bin_model in bin_models:
-            loaded_model = pickle.load(open(bin_model, 'rb'))
+
+        for algorithm_obj in algorithm_objs:
+            # load saved model from disk
+            feature_arr = [df_features.columns.get_loc(feature_name) for feature_name in algorithm_obj['feature_cols']]
+            X_test_data = df_features.iloc[:, feature_arr].values
+
+            loaded_model = pickle.load(open(algorithm_obj['bin_model'], 'rb'))
             result = loaded_model.predict(X_test_data)
             predictions.append(result)
-
         #  voting_system_predictions =
         results = []
         for i in range(len(predictions[0])):
@@ -432,7 +443,6 @@ class GenericModel:
 
         Logger.send('------------------GRID--------------------------')
         Logger.send(classifier_name)
-        Logger.send('Parameters: ' + classifier_parameters)
         Logger.send("Features used: " + json.dumps(feature_cols))
         Logger.send("Best Params: " + str(CV_rfc.best_params_))
         Logger.send('------------------------------------------------')
