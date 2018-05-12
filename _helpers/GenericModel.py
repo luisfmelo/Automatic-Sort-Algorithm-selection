@@ -16,7 +16,9 @@ from sklearn.tree import DecisionTreeClassifier
 from _helpers.Database import Database
 from _helpers.LoggerHelper import Logger
 from config import DIR, TEST_DATA, DB_PATH
-
+from sklearn.model_selection import GridSearchCV, StratifiedKFold
+from sklearn.pipeline import Pipeline
+from sklearn.decomposition import PCA
 
 class GenericModel:
     CLASSES = [10, 100, 1000, 10000, 100000, 1000000]
@@ -321,8 +323,9 @@ class GenericModel:
                 'name': 'Decision Tree Classifier',
                 'function': DecisionTreeClassifier(**parameters),
                 'grid_search': {
-                    'max_depth': np.arange(3, 10),
-                    'criterion': ['gini', 'entropy']
+                    'max_depth': np.arange(1, 20),
+                    'criterion': ['gini', 'entropy'],
+                    'min_samples_split': range(10,500,20)
                 }
             }
 
@@ -346,12 +349,20 @@ class GenericModel:
             algorithm = {
                 'name': 'Multinomial Naive Bayes Classifier',
                 'function': MultinomialNB(**parameters),
+                'grid_search': {
+                    'alpha': (1, 0.1, 0.01, 0.001, 0.0001, 0.00001)
+                }
             }
 
         elif algorithm_code == 'svm':
             algorithm = {
                 'name': 'Support Vector Machine (SVM)',
                 'function': svm.SVC(**parameters),
+                'grid_search': {
+                    'kernel': ['rbf'], 
+                    'gamma': [1e-3, 1e-4],
+                    'C': [1, 10, 100, 1000]
+                }
             }
 
         elif algorithm_code == 'random_forest':
@@ -359,7 +370,7 @@ class GenericModel:
                 'name': 'Random Forest',
                 'function': RandomForestClassifier(**parameters),
                 'grid_search': {
-                    'n_estimators': [100, 200, 500, 1000],
+                    'n_estimators': range(50, 1000, 50),
                     'max_features': ['auto', 'sqrt', 'log2'],
                     'max_depth': [3, 4, 5, 6, 7, 8, 9, 10],
                     'criterion': ['gini', 'entropy']
@@ -371,7 +382,12 @@ class GenericModel:
                 'name': 'Neural Networks',
                 'function': MLPClassifier(**parameters),
                 'grid_search': {
-                    'hidden_layer_sizes': [(5, 2), (7, 7), (128,), (128, 7)],
+                    'solver': ['lbfgs', 'sgd', 'adam'], 
+                    'max_iter': range(250, 2000, 250), 
+                    'alpha': 10.0 ** -np.arange(1, 7), 
+                    'hidden_layer_sizes':np.arange(5, 12), 
+                    'random_state':[0,1,2,3,4,5,6,7,8,9]
+                    # 'hidden_layer_sizes': [(5, 2), (7, 7), (128,), (128, 7)],
                 }
             }
 
@@ -380,9 +396,9 @@ class GenericModel:
                 'name': 'Extra Trees Classifier',
                 'function': ExtraTreesClassifier(**parameters),
                 'grid_search': {
-                    'n_estimators': [100, 200, 500, 1000],
-                    'min_sample_split': [1, 2, 3],
-                    'max_depth': [3, 4, 5, 6, 7, 8, 9, 10],
+                    'n_estimators': range(50,1000,50),
+                    'min_sample_split': range(1,6),
+                    'max_depth': range(3,10),
                     'criterion': ['gini', 'entropy']
                 }
             }
@@ -392,8 +408,9 @@ class GenericModel:
                 'name': 'Ada Boost Classifier',
                 'function': AdaBoostClassifier(**parameters),
                 'grid_search': {
-                    'n_estimators': [50, 100, 200, 500],
-                    'learning_rate': [0.5, 1, 1.5]
+                    'n_estimators': range(50,500,50),
+                    'learning_rate': range(0.1,2,0.05),
+                    "base_estimator__criterion" : ["gini", "entropy"]
                 }
             }
 
@@ -402,8 +419,11 @@ class GenericModel:
                 'name': 'Gradient Boosting Classifier',
                 'function': GradientBoostingClassifier(**parameters),
                 'grid_search': {
-                    'n_estimators': [5, 50, 100, 200],
-                    'learning_rate': [0.05, 0.1, 0.5, 1, 1.5]
+                    'learning_rate': range(0.01,1,0.01)
+                    'n_estimators': range(10,500,10),
+                    'max_depth': range(1,10,1),
+                    'learning_rate': range(0.05,2,0.05),
+                    'min_samples_leaf': range(20,200,20)
                 }
             }
 
@@ -416,7 +436,7 @@ class GenericModel:
         return algorithm
 
     @staticmethod
-    def grid_search(algorithm_code, feature_cols, test_size, class_len=None):
+    def grid_search(algorithm_code, feature_cols, test_size, class_len=None, pca=False):
         try:
             algorithm = GenericModel.get_algorithm(algorithm_code, {})
             classifier = algorithm['function']
@@ -437,27 +457,43 @@ class GenericModel:
             y = dataset.iloc[:, dataset.columns.get_loc("target")][dataset.length == class_len].values
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)  # , random_state=None)
-
-        CV_rfc = GridSearchCV(estimator=classifier, param_grid=classifier_grid_search, cv=10)
+        
+        """
+        For PCA ANalysis
+        """
+        kf = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+        if pca:
+            pipe = Pipeline([
+                ('pca', PCA()),
+                ('clf', classifier),
+            ])
+            parameters = {'pca__n_components': [2, 3, 4, 5, 6, 7]}
+            for k, v in classifier_grid_search.items():
+                parameters['clf__' + k] = v
+            
+            CV_rfc = GridSearchCV(pipe, parameters, cv=kf, n_jobs=-1, verbose=1)
+        else:
+            CV_rfc = GridSearchCV(estimator=classifier, param_grid=classifier_grid_search, cv=kf)
         CV_rfc.fit(X_train, y_train)
 
         Logger.send('------------------GRID--------------------------')
         Logger.send(classifier_name)
         Logger.send("Features used: " + json.dumps(feature_cols))
         Logger.send("Best Params: " + str(CV_rfc.best_params_))
+        Logger.send("Accuracy: " + str(CV_rfc.best_score_))
         Logger.send('------------------------------------------------')
 
-        if class_len is None:
-            _, acc = GenericModel.apply_model(algorithm_code, CV_rfc.best_params_, feature_cols, 'x.csv', 0.3)
-        else:
-            algorithm_obj = {
-                'name': algorithm_code,
-                'parameters': CV_rfc.best_params_,
-                'feature_cols': feature_cols
-            }
-            _, acc = GenericModel.apply_model_by_class(algorithm_obj, class_len)
+        # if class_len is None:
+        #     _, acc = GenericModel.apply_model(algorithm_code, CV_rfc.best_params_, feature_cols, 'x.csv', 0.3)
+        # else:
+        #     algorithm_obj = {
+        #         'name': algorithm_code,
+        #         'parameters': CV_rfc.best_params_,
+        #         'feature_cols': feature_cols
+        #     }
+        #     _, acc = GenericModel.apply_model_by_class(algorithm_obj, class_len)
 
-        return CV_rfc.best_params_, str(acc)
+        return CV_rfc.best_params_, str(CV_rfc.best_score_)
 
 
     @staticmethod
