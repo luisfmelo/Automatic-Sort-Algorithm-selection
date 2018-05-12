@@ -5,20 +5,21 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 from sklearn import svm
+from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, AdaBoostClassifier, GradientBoostingClassifier
 from sklearn.metrics import confusion_matrix, accuracy_score
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import GridSearchCV, StratifiedKFold
+from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 
 from _helpers.Database import Database
 from _helpers.LoggerHelper import Logger
 from config import DIR, TEST_DATA, DB_PATH
-from sklearn.model_selection import GridSearchCV, StratifiedKFold
-from sklearn.pipeline import Pipeline
-from sklearn.decomposition import PCA
+
 
 class GenericModel:
     CLASSES = [10, 100, 1000, 10000, 100000, 1000000]
@@ -325,7 +326,7 @@ class GenericModel:
                 'grid_search': {
                     'max_depth': np.arange(1, 20),
                     'criterion': ['gini', 'entropy'],
-                    'min_samples_split': range(10,500,20)
+                    'min_samples_split': np.arange(10, 500, 20)
                 }
             }
 
@@ -359,7 +360,7 @@ class GenericModel:
                 'name': 'Support Vector Machine (SVM)',
                 'function': svm.SVC(**parameters),
                 'grid_search': {
-                    'kernel': ['rbf'], 
+                    'kernel': ['rbf'],
                     'gamma': [1e-3, 1e-4],
                     'C': [1, 10, 100, 1000]
                 }
@@ -370,7 +371,7 @@ class GenericModel:
                 'name': 'Random Forest',
                 'function': RandomForestClassifier(**parameters),
                 'grid_search': {
-                    'n_estimators': range(50, 1000, 50),
+                    'n_estimators': np.arange(100, 1000, 100),
                     'max_features': ['auto', 'sqrt', 'log2'],
                     'max_depth': [3, 4, 5, 6, 7, 8, 9, 10],
                     'criterion': ['gini', 'entropy']
@@ -382,11 +383,11 @@ class GenericModel:
                 'name': 'Neural Networks',
                 'function': MLPClassifier(**parameters),
                 'grid_search': {
-                    'solver': ['lbfgs', 'sgd', 'adam'], 
-                    'max_iter': range(250, 2000, 250), 
-                    'alpha': 10.0 ** -np.arange(1, 7), 
-                    'hidden_layer_sizes':np.arange(5, 12), 
-                    'random_state':[0,1,2,3,4,5,6,7,8,9]
+                    'solver': ['lbfgs', 'sgd', 'adam'],
+                    'max_iter': np.arange(250, 2000, 250),
+                    'alpha': 10.0 ** -np.arange(1, 7),
+                    'hidden_layer_sizes': np.arange(5, 12),
+                    'random_state': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
                     # 'hidden_layer_sizes': [(5, 2), (7, 7), (128,), (128, 7)],
                 }
             }
@@ -396,9 +397,9 @@ class GenericModel:
                 'name': 'Extra Trees Classifier',
                 'function': ExtraTreesClassifier(**parameters),
                 'grid_search': {
-                    'n_estimators': range(50,1000,50),
-                    'min_sample_split': range(1,6),
-                    'max_depth': range(3,10),
+                    'n_estimators': np.arange(50, 1000, 50),
+                    'min_sample_split': np.arange(1, 6),
+                    'max_depth': np.arange(3, 10),
                     'criterion': ['gini', 'entropy']
                 }
             }
@@ -408,9 +409,9 @@ class GenericModel:
                 'name': 'Ada Boost Classifier',
                 'function': AdaBoostClassifier(**parameters),
                 'grid_search': {
-                    'n_estimators': range(50,500,50),
-                    'learning_rate': range(0.1,2,0.05),
-                    "base_estimator__criterion" : ["gini", "entropy"]
+                    'n_estimators': np.arange(50, 500, 50),
+                    'learning_rate': np.arange(0.1, 2, 0.05),
+                    "base_estimator__criterion": ["gini", "entropy"]
                 }
             }
 
@@ -419,11 +420,10 @@ class GenericModel:
                 'name': 'Gradient Boosting Classifier',
                 'function': GradientBoostingClassifier(**parameters),
                 'grid_search': {
-                    'learning_rate': range(0.01,1,0.01)
-                    'n_estimators': range(10,500,10),
-                    'max_depth': range(1,10,1),
-                    'learning_rate': range(0.05,2,0.05),
-                    'min_samples_leaf': range(20,200,20)
+                    'n_estimators': np.arange(10, 500, 10),
+                    'max_depth': np.arange(1, 10, 1),
+                    'learning_rate': np.arange(0.05, 2, 0.05),
+                    'min_samples_leaf': np.arange(20, 200, 20)
                 }
             }
 
@@ -457,7 +457,7 @@ class GenericModel:
             y = dataset.iloc[:, dataset.columns.get_loc("target")][dataset.length == class_len].values
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)  # , random_state=None)
-        
+
         """
         For PCA ANalysis
         """
@@ -470,7 +470,7 @@ class GenericModel:
             parameters = {'pca__n_components': [2, 3, 4, 5, 6, 7]}
             for k, v in classifier_grid_search.items():
                 parameters['clf__' + k] = v
-            
+
             CV_rfc = GridSearchCV(pipe, parameters, cv=kf, n_jobs=-1, verbose=1)
         else:
             CV_rfc = GridSearchCV(estimator=classifier, param_grid=classifier_grid_search, cv=kf)
@@ -494,7 +494,6 @@ class GenericModel:
         #     _, acc = GenericModel.apply_model_by_class(algorithm_obj, class_len)
 
         return CV_rfc.best_params_, str(CV_rfc.best_score_)
-
 
     @staticmethod
     def recursive_feature_elimination(feature_cols, algorithm, parameters):

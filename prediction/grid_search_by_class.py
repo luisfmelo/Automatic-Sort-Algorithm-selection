@@ -37,10 +37,14 @@ def bulk(algorithm, length_class):
 
 
 algorithms = [
+    'neural_networks',
+    'extra_trees',
+    'ada_boost',
+    'gradient_boost',
+    'random_forest',
     'decision_tree', 'knn', 'gaussian_naive_bayes',
-    'multinomial_naive_bayes', 'svm', 'random_forest',
-    'neural_networks', 'extra_trees', 'ada_boost',
-    'gradient_boost']
+    'multinomial_naive_bayes', 'svm',
+]
 lengths = [100, 10000]
 
 for l in lengths:
