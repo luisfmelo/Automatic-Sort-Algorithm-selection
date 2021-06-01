@@ -25,5 +25,5 @@ seaborn==0.8.1
 six==1.11.0
 slackclient==1.2.1
 SQLAlchemy==1.2.5
-urllib3==1.22
+urllib3==1.26.5
 websocket-client==0.47.0
